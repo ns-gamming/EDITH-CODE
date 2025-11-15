@@ -84,6 +84,10 @@ export default function DashboardPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setLocation("/profile")} data-testid="menu-profile-dashboard">
+                <Settings className="w-4 h-4 mr-2" />
+                My Profile
+              </DropdownMenuItem>
               <DropdownMenuItem data-testid="menu-settings-dashboard">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings

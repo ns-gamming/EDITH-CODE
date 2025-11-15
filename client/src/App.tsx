@@ -8,7 +8,12 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AuthPage from "@/pages/auth";
 import DashboardPage from "@/pages/dashboard";
 import IDEPage from "@/pages/ide";
+import ProfilePage from "@/pages/profile";
+import PrivacyPolicyPage from "@/pages/privacy-policy";
+import TermsPage from "@/pages/terms";
+import DisclaimerPage from "@/pages/disclaimer";
 import NotFound from "@/pages/not-found";
+import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
@@ -59,6 +64,10 @@ function Router() {
       <Route path="/auth" component={() => <PublicRoute component={AuthPage} />} />
       <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
       <Route path="/ide/:projectId" component={() => <ProtectedRoute component={IDEPage} />} />
+      <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
+      <Route path="/privacy" component={PrivacyPolicyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/disclaimer" component={DisclaimerPage} />
       <Route path="/" component={() => <Redirect to="/dashboard" />} />
       <Route component={NotFound} />
     </Switch>

@@ -261,6 +261,13 @@ export default function AuthPage() {
                     Sign Up
                   </button>
                 </p>
+                <div className="mt-4 flex justify-center gap-4 text-xs text-gray-500">
+                  <a href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</a>
+                  <span>•</span>
+                  <a href="/terms" className="hover:text-cyan-400 transition-colors">Terms</a>
+                  <span>•</span>
+                  <a href="/disclaimer" className="hover:text-cyan-400 transition-colors">Disclaimer</a>
+                </div>
               </div>
             )}
 
