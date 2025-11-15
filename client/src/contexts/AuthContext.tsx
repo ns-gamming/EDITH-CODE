@@ -9,11 +9,15 @@ interface AuthContextType {
   signUp: (data: {
     email: string;
     password: string;
-    fullName?: string;
-    username?: string;
+    fullName: string;
+    username: string;
     bio?: string;
     occupation?: string;
     experienceLevel?: string;
+    skills?: string[];
+    goals?: string;
+    preferredLanguage?: string;
+    timezone?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -81,11 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (signupData: {
     email: string;
     password: string;
-    fullName?: string;
-    username?: string;
+    fullName: string;
+    username: string;
     bio?: string;
     occupation?: string;
     experienceLevel?: string;
+    skills?: string[];
+    goals?: string;
+    preferredLanguage?: string;
+    timezone?: string;
   }) => {
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
@@ -101,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.user) {
-      // Create user profile
+      // Create user profile with extended fields
       const { data: userData, error: profileError } = await supabase
         .from("users")
         .insert({
@@ -112,6 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           bio: signupData.bio,
           occupation: signupData.occupation,
           experience_level: signupData.experienceLevel,
+          skills: signupData.skills || [],
+          goals: signupData.goals,
+          preferred_language: signupData.preferredLanguage,
+          timezone: signupData.timezone,
         })
         .select()
         .single();

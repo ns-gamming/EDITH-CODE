@@ -89,7 +89,22 @@ export const insertUploadedFileSchema = createInsertSchema(uploadedFiles).omit({
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect & {
+  fullName: string;
+  username: string;
+  bio?: string;
+  avatarUrl?: string;
+  logoUrl?: string;
+  occupation?: string;
+  experienceLevel?: string;
+  skills?: string[];
+  goals?: string;
+  preferredLanguage?: string;
+  timezone?: string;
+  preferences?: Record<string, any>;
+  createdAt: Date;
+  updatedAt?: Date;
+};
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projects.$inferSelect;
@@ -101,7 +116,7 @@ export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
 
 export type InsertSystemPrompt = z.infer<typeof insertSystemPromptSchema>;
-export type SystemPrompt = typeof systemPrompts.$inferSelect;
+export type SystemPrompt = typeof system prompts.$inferSelect;
 
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
