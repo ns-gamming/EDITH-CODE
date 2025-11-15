@@ -11,7 +11,7 @@ export default {
         sm: ".1875rem", /* 3px */
       },
       colors: {
-        // Flat / base colors (regular buttons)
+        // Flat / base colors
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
@@ -83,9 +83,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ["Inter", "var(--font-sans)", "sans-serif"],
         serif: ["var(--font-serif)"],
-        mono: ["var(--font-mono)"],
+        mono: ["JetBrains Mono", "Fira Code", "var(--font-mono)", "monospace"],
       },
       keyframes: {
         "accordion-down": {
@@ -96,10 +96,32 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "slide-in": {
+          from: { transform: "translateX(100%)" },
+          to: { transform: "translateX(0)" },
+        },
+        "slide-out": {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(100%)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "slide-in": "slide-in 0.6s ease-in-out",
+        "slide-out": "slide-out 0.6s ease-in-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+      },
+      boxShadow: {
+        'glow-sm': '0 0 10px rgba(0, 255, 65, 0.3)',
+        'glow-md': '0 0 20px rgba(0, 255, 65, 0.4)',
+        'glow-lg': '0 0 30px rgba(0, 255, 65, 0.5)',
+        'glow-pink-sm': '0 0 10px rgba(255, 0, 128, 0.3)',
+        'glow-pink-md': '0 0 20px rgba(255, 0, 128, 0.4)',
       },
     },
   },
