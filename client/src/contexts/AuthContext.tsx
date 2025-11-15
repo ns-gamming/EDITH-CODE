@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, getSupabaseConfigError } from "@/lib/supabase";
 import type { User } from "@shared/schema";
 
 // Define UserProfile type if it's not already defined elsewhere
@@ -14,7 +14,6 @@ interface UserProfile {
   projectGoals?: string;
   created_at?: string;
 }
-
 
 interface AuthContextType {
   user: User | null;
@@ -35,16 +34,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 }
-
-// Helper functions for Supabase configuration checks (assuming these are defined elsewhere or need to be added)
-const isSupabaseConfigured = () => {
-  // Replace with actual check for Supabase configuration
-  return process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-};
-
-const getSupabaseConfigError = () => {
-  return "Supabase not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.";
-};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
