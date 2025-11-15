@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { supabase } from "./lib/supabase";
+import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { generateCode, analyzeImage } from "./lib/gemini";
 import crypto from "crypto";
 
@@ -516,6 +516,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.get("/api/usage", async (req: Request, res: Response) => {
     try {
+      if (!isSupabaseConfigured() || !supabase) {
+        return res.status(503).json({ message: "Supabase not configured" });
+      }
       const userId = req.query.userId as string;
       const today = new Date().toISOString().split("T")[0];
       
@@ -544,6 +547,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/ai/generate", async (req: Request, res: Response) => {
     try {
+      if (!isSupabaseConfigured() || !supabase) {
+        return res.status(503).json({ message: "Supabase not configured" });
+      }
       const { userId, prompt, systemPrompt, projectId } = req.body;
 
       // Check usage limits

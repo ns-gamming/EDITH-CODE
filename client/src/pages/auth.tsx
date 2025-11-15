@@ -8,6 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import { SiGoogle, SiGithub } from "react-icons/si";
+import { Redirect } from "wouter";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -158,8 +162,23 @@ export default function AuthPage() {
     setProjectGoals("");
   };
 
+  if (!isSupabaseConfigured() && typeof window !== 'undefined') {
+    // If running on the client and Supabase is not configured, return null or a loading indicator
+    // The Alert component will handle showing the configuration message
+    return null;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 p-4">
+      {!isSupabaseConfigured() && (
+        <Alert className="absolute top-4 left-4 right-4 max-w-2xl mx-auto bg-destructive/10 border-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Configuration Required</AlertTitle>
+          <AlertDescription>
+            Please add your Supabase credentials (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY) to the Secrets tool to enable authentication.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="container max-w-5xl mx-auto">
         <div className={`bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-purple-500/30 transition-all duration-500 ${isSignUp ? 'min-h-[700px]' : 'min-h-[600px]'}`}>
           <div className="grid md:grid-cols-2">
@@ -176,14 +195,14 @@ export default function AuthPage() {
                 <div className="flex gap-3 mb-6">
                   <button
                     onClick={() => handleOAuthSignIn('google')}
-                    disabled={loading}
+                    disabled={loading || !isSupabaseConfigured()}
                     className="flex-1 p-3 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 transition-all"
                   >
                     <SiGoogle className="w-5 h-5 mx-auto text-white" />
                   </button>
                   <button
                     onClick={() => handleOAuthSignIn('github')}
-                    disabled={loading}
+                    disabled={loading || !isSupabaseConfigured()}
                     className="flex-1 p-3 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 transition-all"
                   >
                     <SiGithub className="w-5 h-5 mx-auto text-white" />
@@ -209,6 +228,7 @@ export default function AuthPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading || !isSupabaseConfigured()}
                       className="mt-1 bg-gray-800 border-gray-700 text-white"
                     />
                   </div>
@@ -221,13 +241,14 @@ export default function AuthPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading || !isSupabaseConfigured()}
                       className="mt-1 bg-gray-800 border-gray-700 text-white"
                     />
                   </div>
                   <Button
                     type="submit"
                     className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-                    disabled={loading}
+                    disabled={loading || !isSupabaseConfigured()}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sign In
@@ -269,6 +290,7 @@ export default function AuthPage() {
                         value={signupEmail}
                         onChange={(e) => setSignupEmail(e.target.value)}
                         required
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -281,6 +303,7 @@ export default function AuthPage() {
                         value={signupPassword}
                         onChange={(e) => setSignupPassword(e.target.value)}
                         required
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -293,6 +316,7 @@ export default function AuthPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -300,6 +324,7 @@ export default function AuthPage() {
                       type="button"
                       onClick={handleSignUpNext}
                       className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                      disabled={!isSupabaseConfigured()}
                     >
                       Next <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -317,6 +342,7 @@ export default function AuthPage() {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -329,6 +355,7 @@ export default function AuthPage() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -339,6 +366,7 @@ export default function AuthPage() {
                         placeholder="Tell us about yourself..."
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                         rows={3}
                       />
@@ -349,6 +377,7 @@ export default function AuthPage() {
                         onClick={() => setSignupStep(1)}
                         variant="outline"
                         className="flex-1 border-gray-700"
+                        disabled={!isSupabaseConfigured()}
                       >
                         <ChevronLeft className="mr-2 h-4 w-4" /> Back
                       </Button>
@@ -356,6 +385,7 @@ export default function AuthPage() {
                         type="button"
                         onClick={handleSignUpNext}
                         className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                        disabled={!isSupabaseConfigured()}
                       >
                         Next <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -373,6 +403,7 @@ export default function AuthPage() {
                         placeholder="e.g., Student, Developer, Designer"
                         value={occupation}
                         onChange={(e) => setOccupation(e.target.value)}
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -382,6 +413,7 @@ export default function AuthPage() {
                         id="experience"
                         value={experienceLevel}
                         onChange={(e) => setExperienceLevel(e.target.value)}
+                        disabled={!isSupabaseConfigured()}
                         className="w-full mt-1 p-2 bg-gray-800 border border-gray-700 rounded-md text-white"
                       >
                         <option value="">Select...</option>
@@ -399,6 +431,7 @@ export default function AuthPage() {
                         placeholder="e.g., JavaScript, Python, TypeScript"
                         value={favoriteLanguages}
                         onChange={(e) => setFavoriteLanguages(e.target.value)}
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                       />
                     </div>
@@ -409,6 +442,7 @@ export default function AuthPage() {
                         placeholder="What do you want to build with EDITH?"
                         value={projectGoals}
                         onChange={(e) => setProjectGoals(e.target.value)}
+                        disabled={!isSupabaseConfigured()}
                         className="mt-1 bg-gray-800 border-gray-700 text-white"
                         rows={3}
                       />
@@ -419,13 +453,14 @@ export default function AuthPage() {
                         onClick={() => setSignupStep(2)}
                         variant="outline"
                         className="flex-1 border-gray-700"
+                        disabled={!isSupabaseConfigured()}
                       >
                         <ChevronLeft className="mr-2 h-4 w-4" /> Back
                       </Button>
                       <Button
                         type="submit"
                         className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-                        disabled={loading}
+                        disabled={loading || !isSupabaseConfigured()}
                       >
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Create Account
