@@ -1,11 +1,20 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 import type { User } from "@shared/schema";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<void>;
+  signUp: (data: {
+    email: string;
+    password: string;
+    fullName?: string;
+    username?: string;
+    bio?: string;
+    occupation?: string;
+    experienceLevel?: string;
+  }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -16,65 +25,98 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    checkSession();
+    // Check active sessions and subscribe to auth changes
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        loadUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        loadUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const checkSession = async () => {
+  const loadUserProfile = async (userId: string) => {
     try {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      }
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+      setUser(data);
     } catch (error) {
-      console.error("Session check failed:", error);
+      console.error("Error loading user profile:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
-    const response = await fetch("/api/auth/signin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Sign in failed");
-    }
+    if (error) throw error;
 
-    const userData = await response.json();
-    setUser(userData);
+    if (data.user) {
+      await loadUserProfile(data.user.id);
+    }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const response = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, fullName }),
-      credentials: "include",
+  const signUp = async (signupData: {
+    email: string;
+    password: string;
+    fullName?: string;
+    username?: string;
+    bio?: string;
+    occupation?: string;
+    experienceLevel?: string;
+  }) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: signupData.email,
+      password: signupData.password,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Sign up failed");
-    }
+    if (error) throw error;
 
-    const userData = await response.json();
-    setUser(userData);
+    if (data.user) {
+      // Create user profile
+      const { data: userData, error: profileError } = await supabase
+        .from("users")
+        .insert({
+          id: data.user.id,
+          email: signupData.email,
+          full_name: signupData.fullName,
+          username: signupData.username,
+          bio: signupData.bio,
+          occupation: signupData.occupation,
+          experience_level: signupData.experienceLevel,
+        })
+        .select()
+        .single();
+
+      if (profileError) throw profileError;
+      setUser(userData);
+    }
   };
 
   const signOut = async () => {
-    await fetch("/api/auth/signout", {
-      method: "POST",
-      credentials: "include",
-    });
+    await supabase.auth.signOut();
     setUser(null);
   };
 
