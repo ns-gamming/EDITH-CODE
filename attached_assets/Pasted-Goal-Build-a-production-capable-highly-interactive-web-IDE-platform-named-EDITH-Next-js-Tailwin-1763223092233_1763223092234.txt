@@ -1,0 +1,213 @@
+Goal: Build a production-capable, highly-interactive web IDE platform named EDITH (Next.js + Tailwind, Supabase auth+DB, Monaco editor, Gemini/LLM integration, GitHub sync, sandbox runner, secrets vault, agent orchestration, monitoring, billing). Produce working code, tests, infra scripts, docs, and a demo workspace. Follow the milestones and safety rules below. Always ask the human (me) at each checkpoint for approval before major irreversible steps (deploys, billing config, public repo push).
+
+High-level constraints & rules
+
+Do not accept or embed any API key, password, or secret in repository files or in chat history. Always prompt the user to set secrets as environment variables or Replit secrets. Use placeholders like GEMINI_API_KEY and instruct the user how to add them to secrets. If the user pastes a key in chat, remind them to revoke/rotate the key and re-enter via a secure secret store.
+
+Use a hybrid, configurable LLM model adapter pattern: support platform-managed and user-provided API keys; ask the user which mode to default to for each workspace. Do not assume a default.
+
+Create well-structured commits and branches. Use feature branches named feat/<feature-name>; create meaningful commit messages; open PRs for major features.
+
+Provide clear tests (unit & integration where applicable), type safety (TypeScript), and linting config (ESLint + Prettier). Add CI pipeline with checks.
+
+For any potentially dangerous or costly operations (deploy, billing, add paid plans, enable managed keys), create a human approval checkpoint.
+
+Produce concise user-facing docs and a short demo script to show core flows.
+
+Primary deliverables (for each milestone produce code, README, tests, and a small demo)
+
+Repo skeleton (Next.js TypeScript app using App Router + Tailwind)
+
+Supabase integration: auth (signup/login), user table, role field (free/paid), secrets-safe pattern
+
+Monaco editor integration with LSP + basic run/preview for JS/HTML/CSS
+
+Prompt Enhancer module: transforms short user prompt + context -> enhanced prompt
+
+LLM adapter: plugin architecture to add Gemini/OpenAI/Anthropic later
+
+Runner infra: local dev-mode runner and a blueprint for a containerized runner (Dockerfile + run scripts)
+
+GitHub OAuth sync and PR automation (agent can create PR with patch, test, and PR description)
+
+Checkpoint system: snapshots & timeline UI (storage in Supabase)
+
+Billing skeleton (Stripe placeholders + plan management pages)
+
+Security checks: semgrep or simple static checks, secret scanning, dependency checks
+
+Animations & onboarding hero (Lottie integration + Framer Motion)
+
+Tests & CI: GitHub Actions or Replit CI equivalents with lint/test/build
+
+Milestones & step-by-step tasks (stop for human confirmation after each milestone)
+M1 — Project init & infra skeleton (ask for OK)
+
+Create repository structure (monorepo optional — prefer single Next app initially).
+
+package.json with scripts: dev, build, start, lint, test.
+
+Setup TypeScript, Tailwind, ESLint, Prettier.
+
+Add lib/supabaseClient.ts with placeholder env variables.
+
+Add .env.example listing required env variables (do not include real keys).
+
+Commit to feat/bootstrap and open PR.
+Checkpoint: present the repo tree and run npm run dev locally. Ask human to approve before next milestone.
+
+M2 — Auth, DB, and animated auth pages (ask for OK)
+
+Add Supabase integration (auth sign-up, sign-in) and a role model (free/paid).
+
+Implement animated signup/login pages (Lottie + Framer Motion) with accessible fallback.
+
+Add client and server helper functions for sessions and user roles.
+
+Add tests for auth flows (mock Supabase as needed).
+Commit and open PR.
+Checkpoint: show a video/gif/demo or screenshots and run through signup flow. Ask human.
+
+M3 — Editor core & file system (ask for OK)
+
+Integrate Monaco editor with file tree component and tabs.
+
+Add basic LSP integration via a lightweight WebSocket LSP gateway (or stubbed LSP adapter for MVP).
+
+Add an editor API for reading/saving files to Supabase storage or DB.
+
+Add an integrated terminal component (emulated for MVP; real runner connects later).
+
+Commit, open PR, checkpoint.
+
+M4 — Prompt Enhancer + LLM adapter (ask for OK)
+
+Implement lib/ai/promptEnhancer.ts that:
+
+Accepts user short prompt + cursor context + project metadata + user preferences.
+
+Produces enhancedPrompt object: {system, user, contextFiles[], constraints, expectedOutputs}.
+
+Includes safety rules (no secrets exposure, do not change infra credentials).
+
+Implement lib/ai/adapter.ts with adapter interface for sendPrompt(enhancedPrompt, opts). Provide a Gemini adapter skeleton and a fallback mock adapter for tests.
+
+Ensure the adapter supports usePlatformKey: boolean and useUserKey: boolean. If user key required, the agent must prompt the human to set GEMINI_API_KEY in secrets and confirm. The agent must not store the key in repo nor echo it back.
+
+Provide a UI control under the editor to preview the enhanced prompt before sending.
+
+Add tests for prompt enhancer logic (unit tests).
+Commit, open PR, checkpoint.
+
+M5 — Agent flows, multi-step chains & checkpoints (ask for OK)
+
+Implement agent orchestration engine: ability to define multi-step pipelines (lint → test → build → suggest → apply patch).
+
+Make each agent step produce logs, diffs (unified patch), and a confidence/explainability note.
+
+Implement human-in-the-loop modal for accepting/rejecting patches. If accepted, create commits or PRs as appropriate.
+
+Implement snapshot/checkpoint API to store pre/post snapshots and UI to revert.
+Commit, PR, checkpoint.
+
+M6 — Runner infra & sandboxing (ask for OK)
+
+Provide a local dev-mode runner (Docker container) that can run preview servers for web projects (HTML/JS/CSS) securely. Include resource limits.
+
+Provide blueprint for scaling runner: Dockerfile, deploy-runner.sh, and a spec document for deploying runner on a VPS or K8s.
+
+Connect runner with editor preview and the CI pipeline.
+Commit, PR, checkpoint.
+
+M7 — GitHub sync, PR automation & CI (ask for OK)
+
+Add GitHub OAuth connect flow (do not request repo write without explicit user consent).
+
+Implement Sync to GitHub button that creates a branch, commits changes, runs tests, and opens a PR with AI-generated PR description and tests.
+
+If PR contains AI changes, post a comment summarizing what the AI changed and why.
+Commit, PR, checkpoint.
+
+M8 — Security gates, secrets vault, and billing (ask for OK)
+
+Add dependency vulnerability check step (Snyk/OWASP equivalent stub) to CI.
+
+Implement secrets manager UI that stores secrets server-side encrypted and enforces RLS.
+
+Billing skeleton with Stripe placeholders; do not enable live charges until human approval.
+Commit, PR, checkpoint.
+
+Production prep & docs (final checkpoint)
+
+Harden CORS, CSP, RLS, and rate limits.
+
+Add Sentry + monitoring integration (placeholders).
+
+Create /docs with: setup steps, how to add secrets, how to add LLM keys, how to rotate keys, how to deploy runner.
+
+Provide a short demo script and a video or GIF showing a simple edit→AI fix→PR flow.
+Final approval from human before any public push or deploy.
+
+Testing & quality expectations
+
+Provide unit tests and integration tests for critical flows.
+
+Ensure TypeScript strict mode is enabled.
+
+Add lint and format hooks (pre-commit with Husky if available).
+
+For each major feature commit: include test coverage and short demo notes.
+
+How to handle API keys and billing safely (very important)
+
+The agent must never ask the user to paste keys into code or into the public chat. Instead:
+
+Ask the human: “Do you want to use a platform-managed key or your own key for LLM calls?”
+
+If user chooses user-provided key, show step-by-step instructions to add the key to Replit secrets or environment variables: e.g., GEMINI_API_KEY as a secret via Replit UI or npx replit secrets set GEMINI_API_KEY "...".
+
+The agent should provide code that reads process.env.GEMINI_API_KEY and never logs it.
+
+If we detect a key pasted in chat or in any file, STOP, notify the human to rotate the key, and remove it from the repo immediately. Create an issue to rotate keys.
+
+For platform-managed keys: implement metering and an admin dashboard with usage and spending alerts. Require human confirmation before enabling.
+
+Behavioral & interaction rules for the agent
+
+Ask exactly one clarifying question at a time if something is ambiguous.
+
+Always produce a short checklist of what was done and the next steps after each checkpoint.
+
+For big changes, create a PR and place a clear human-approval comment.
+
+Provide clear rollback instructions for each deploy or migration.
+
+Be explicit about assumptions (runtime, Node version, Supabase project already created?). If missing, ask the user.
+
+Outputs expected at each checkpoint
+
+Code committed to a feature branch with meaningful commit messages.
+
+A PR opened with description, tests passing, and a short demo or GIF.
+
+A CHECKPOINT-<milestone>.md in the repo summarizing the work and next actions.
+
+A README.md updated with how to run locally and how to add secrets.
+
+Developer convenience & UX
+
+Provide a simple npx edith-dev script that bootstraps the necessary .env keys locally from .env.example after the user sets secrets.
+
+Provide a scripts/ folder with dev-runner, build, deploy-runner, and run-tests.
+
+Provide templates/ for starter projects (vanilla web, express backend, react + api) for quick creation.
+
+If you need to act now, follow this order:
+
+Confirm you have a Supabase project to use and whether you want platform / user / hybrid LLM key mode (ask human).
+
+If confirmed, initialize the repo skeleton (M1). After initialization, stop and present the repo tree and the npm run dev output. Wait for approval.
+
+Security & safety reminder (for the human)
+
+If you’ve posted a real API key publicly in this chat, rotate/revoke it immediately and add a new key only via secure secret stores. I will not use any keys included in chat content.
