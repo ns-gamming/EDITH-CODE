@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, ExternalLink, Smartphone, Monitor } from "lucide-react";
 import type { File } from "@shared/schema";
+import { Alert, AlertDescription } from "./ui/alert";
+
 
 interface LivePreviewProps {
   files: File[];
@@ -12,6 +14,7 @@ interface LivePreviewProps {
 export function LivePreview({ files, autoRefresh = true }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMobileView, setIsMobileView] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (autoRefresh) {
@@ -27,7 +30,7 @@ export function LivePreview({ files, autoRefresh = true }: LivePreviewProps) {
     const jsFile = files.find((f) => f.name.endsWith(".js") || f.language === "javascript");
 
     let html = htmlFile?.content || "<html><body><h1>No HTML file found</h1></body></html>";
-    
+
     // Inject CSS
     if (cssFile) {
       html = html.replace(
@@ -98,6 +101,11 @@ export function LivePreview({ files, autoRefresh = true }: LivePreviewProps) {
       </div>
 
       <div className="flex-1 bg-muted p-4 flex items-center justify-center overflow-auto">
+        {error && (
+          <Alert variant="destructive" className="w-full">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <div
           className={`bg-background rounded-lg shadow-lg transition-all ${
             isMobileView ? "w-[375px] h-[667px]" : "w-full h-full"
@@ -109,6 +117,7 @@ export function LivePreview({ files, autoRefresh = true }: LivePreviewProps) {
             sandbox="allow-scripts allow-same-origin"
             title="Live Preview"
             data-testid="iframe-preview"
+            onError={(e) => setError(`Error loading preview: ${e.type}`)}
           />
         </div>
       </div>
