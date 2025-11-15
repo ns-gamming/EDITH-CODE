@@ -22,7 +22,11 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        await signUp(email, password, fullName);
+        await signUp({
+          email,
+          password,
+          fullName,
+        });
         toast({
           title: "Welcome to EDITH!",
           description: "Your account has been created successfully.",

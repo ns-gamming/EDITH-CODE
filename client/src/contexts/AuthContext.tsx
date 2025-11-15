@@ -90,6 +90,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
       password: signupData.password,
+      options: {
+        data: {
+          full_name: signupData.fullName,
+          username: signupData.username,
+        },
+      },
     });
 
     if (error) throw error;
@@ -110,7 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw profileError;
+      }
       setUser(userData);
     }
   };
