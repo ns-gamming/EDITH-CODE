@@ -540,6 +540,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== AI CODE GENERATION ROUTE =====
+  
+  app.post("/api/ai/generate", async (req: Request, res: Response) => {
+    try {
+      const { userId, prompt, systemPrompt, projectId } = req.body;
+
+      // Check usage limits
+      const today = new Date().toISOString().split("T")[0];
+      const { data: usageData } = await supabase
+        .from("usage_tracking")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .single();
+
+      const requestCount = usageData?.request_count || 0;
+      
+      // Get user's API key
+      let userApiKey;
+      const { data: apiKeyData } = await supabase
+        .from("api_keys")
+        .select("encrypted_key")
+        .eq("user_id", userId)
+        .eq("service", "gemini")
+        .single();
+
+      if (apiKeyData) {
+        userApiKey = decryptKey(apiKeyData.encrypted_key);
+      }
+
+      // If no user API key and free limit reached, throw error
+      if (!userApiKey && requestCount >= FREE_TIER_DAILY_LIMIT) {
+        return res.status(403).json({ 
+          message: "Free tier limit reached. Please add your own API key to continue.",
+          limitReached: true 
+        });
+      }
+
+      // Get project context
+      let projectContext;
+      if (projectId) {
+        const { data: filesData } = await supabase
+          .from("files")
+          .select("name, path, language")
+          .eq("project_id", projectId);
+        
+        projectContext = { files: filesData };
+      }
+
+      const code = await generateCode(prompt, systemPrompt, userApiKey, projectContext);
+
+      // Update usage tracking if using free tier
+      if (!userApiKey) {
+        await supabase
+          .from("usage_tracking")
+          .upsert({
+            user_id: userId,
+            date: today,
+            request_count: requestCount + 1,
+          });
+      }
+
+      // Save message to chat history
+      await supabase.from("chat_messages").insert([
+        { project_id: projectId, role: "user", content: prompt, model: "gemini-2.0-flash-exp" },
+        { project_id: projectId, role: "assistant", content: code, model: "gemini-2.0-flash-exp" },
+      ]);
+
+      res.json({ code, remaining: userApiKey ? null : Math.max(0, FREE_TIER_DAILY_LIMIT - requestCount - 1) });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ===== IMAGE ANALYSIS ROUTE =====
   
   app.post("/api/ai/analyze-image", async (req: Request, res: Response) => {

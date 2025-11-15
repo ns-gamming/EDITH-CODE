@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@shared/schema";
@@ -14,12 +15,11 @@ interface AuthContextType {
     bio?: string;
     occupation?: string;
     experienceLevel?: string;
-    skills?: string[];
-    goals?: string;
-    preferredLanguage?: string;
-    timezone?: string;
+    favoriteLanguages?: string;
+    projectGoals?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and subscribe to auth changes
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         loadUserProfile(session.user.id);
@@ -90,10 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bio?: string;
     occupation?: string;
     experienceLevel?: string;
-    skills?: string[];
-    goals?: string;
-    preferredLanguage?: string;
-    timezone?: string;
+    favoriteLanguages?: string;
+    projectGoals?: string;
   }) => {
     const { data, error } = await supabase.auth.signUp({
       email: signupData.email,
@@ -109,22 +106,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.user) {
-      // Create user profile with extended fields
+      const preferences = {
+        favoriteLanguages: signupData.favoriteLanguages || "",
+        projectGoals: signupData.projectGoals || "",
+      };
+
       const { data: userData, error: profileError } = await supabase
         .from("users")
-        .insert({
-          id: data.user.id,
-          email: signupData.email,
+        .update({
           full_name: signupData.fullName,
           username: signupData.username,
           bio: signupData.bio,
           occupation: signupData.occupation,
           experience_level: signupData.experienceLevel,
-          skills: signupData.skills || [],
-          goals: signupData.goals,
-          preferred_language: signupData.preferredLanguage,
-          timezone: signupData.timezone,
+          preferences,
         })
+        .eq("id", data.user.id)
         .select()
         .single();
 
@@ -141,8 +138,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const updateProfile = async (updates: Partial<User>) => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    setUser(data);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

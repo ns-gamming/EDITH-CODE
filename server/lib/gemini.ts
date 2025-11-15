@@ -1,53 +1,89 @@
-// Blueprint reference: javascript_gemini
-import { GoogleGenAI } from "@google/genai";
 
-// DON'T DELETE THIS COMMENT
-// Follow these instructions when using this blueprint:
-// - Note that the newest Gemini model series is "gemini-2.5-flash" or gemini-2.5-pro"
-//   - do not change this unless explicitly requested by the user
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const PLATFORM_API_KEY = process.env.GEMINI_API_KEY || "";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
-export function getGeminiClient(userApiKey?: string) {
-  const apiKey = userApiKey || PLATFORM_API_KEY;
-  if (!apiKey) {
-    throw new Error("No Gemini API key available");
-  }
-  return new GoogleGenAI({ apiKey });
-}
-
-export async function generateCode(prompt: string, systemPrompt?: string, userApiKey?: string): Promise<string> {
-  const ai = getGeminiClient(userApiKey);
+export async function generateCode(
+  prompt: string,
+  systemPrompt?: string,
+  userApiKey?: string,
+  projectContext?: any
+): Promise<string> {
+  const apiKey = userApiKey || GEMINI_API_KEY;
   
-  const fullPrompt = systemPrompt 
-    ? `${systemPrompt}\n\nUser request: ${prompt}`
-    : prompt;
+  if (!apiKey) {
+    throw new Error("Gemini API key is required. Please add your API key in settings.");
+  }
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: fullPrompt,
-  });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-  return response.text || "No response from AI";
+  const contextPrompt = projectContext
+    ? `Project Context:\nFiles: ${JSON.stringify(projectContext.files || [])}\n\n`
+    : "";
+
+  const fullPrompt = `${systemPrompt || "You are EDITH, an expert AI coding assistant. Generate clean, production-ready code with proper comments and error handling."}\n\n${contextPrompt}User Request: ${prompt}\n\nProvide the complete code implementation:`;
+
+  const result = await model.generateContent(fullPrompt);
+  const response = await result.response;
+  return response.text();
 }
 
-export async function analyzeImage(base64Image: string, prompt: string, userApiKey?: string): Promise<string> {
-  const ai = getGeminiClient(userApiKey);
+export async function analyzeImage(
+  base64Image: string,
+  prompt: string,
+  userApiKey?: string
+): Promise<string> {
+  const apiKey = userApiKey || GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("Gemini API key is required for image analysis.");
+  }
 
-  const contents = [
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+  const imageParts = [
     {
       inlineData: {
-        data: base64Image,
-        mimeType: "image/jpeg",
+        data: base64Image.split(',')[1],
+        mimeType: "image/png",
       },
     },
-    prompt || "Analyze this image in detail and describe what code or UI it represents. If it's a screenshot of code, extract the code. If it's a UI mockup, describe how to build it.",
   ];
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: contents,
+  const result = await model.generateContent([
+    prompt || "Analyze this image and extract any code, UI design, or technical information you can find. Provide a detailed description.",
+    ...imageParts,
+  ]);
+  
+  const response = await result.response;
+  return response.text();
+}
+
+export async function chatWithAI(
+  messages: { role: string; content: string }[],
+  userApiKey?: string
+): Promise<string> {
+  const apiKey = userApiKey || GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("Gemini API key is required.");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+  const chat = model.startChat({
+    history: messages.slice(0, -1).map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }],
+    })),
   });
 
-  return response.text || "";
+  const lastMessage = messages[messages.length - 1];
+  const result = await chat.sendMessage(lastMessage.content);
+  const response = await result.response;
+  
+  return response.text();
 }
