@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +50,26 @@ export default function AuthPage() {
     }
   };
 
+  const handleOAuthSignIn = async (provider: 'google' | 'github' | 'facebook' | 'azure') => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "OAuth sign-in failed",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
     setEmail("");
@@ -70,16 +91,36 @@ export default function AuthPage() {
             </div>
 
             <div className="flex gap-3 mb-6">
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-google-signin">
+              <button 
+                onClick={() => handleOAuthSignIn('google')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-google-signin"
+              >
                 <SiGoogle className="w-5 h-5 mx-auto" />
               </button>
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-github-signin">
+              <button 
+                onClick={() => handleOAuthSignIn('github')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-github-signin"
+              >
                 <SiGithub className="w-5 h-5 mx-auto" />
               </button>
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-facebook-signin">
+              <button 
+                onClick={() => handleOAuthSignIn('facebook')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-facebook-signin"
+              >
                 <SiFacebook className="w-5 h-5 mx-auto" />
               </button>
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-linkedin-signin">
+              <button 
+                onClick={() => handleOAuthSignIn('azure')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-linkedin-signin"
+              >
                 <SiLinkedin className="w-5 h-5 mx-auto" />
               </button>
             </div>
@@ -143,16 +184,36 @@ export default function AuthPage() {
             </div>
 
             <div className="flex gap-3 mb-6">
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-google-signup">
+              <button 
+                onClick={() => handleOAuthSignIn('google')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-google-signup"
+              >
                 <SiGoogle className="w-5 h-5 mx-auto" />
               </button>
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-github-signup">
+              <button 
+                onClick={() => handleOAuthSignIn('github')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-github-signup"
+              >
                 <SiGithub className="w-5 h-5 mx-auto" />
               </button>
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-facebook-signup">
+              <button 
+                onClick={() => handleOAuthSignIn('facebook')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-facebook-signup"
+              >
                 <SiFacebook className="w-5 h-5 mx-auto" />
               </button>
-              <button className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" data-testid="button-linkedin-signup">
+              <button 
+                onClick={() => handleOAuthSignIn('azure')}
+                disabled={loading}
+                className="flex-1 p-3 border border-border rounded-xl hover-elevate active-elevate-2 transition-all" 
+                data-testid="button-linkedin-signup"
+              >
                 <SiLinkedin className="w-5 h-5 mx-auto" />
               </button>
             </div>

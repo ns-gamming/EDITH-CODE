@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import { MonacoEditor } from "@/components/MonacoEditor";
 import { FileTree } from "@/components/FileTree";
 import { AIChat } from "@/components/AIChat";
@@ -10,8 +11,9 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { SystemPromptEditor } from "@/components/SystemPromptEditor";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Home, Settings, Key, Sparkles, LogOut, Menu, Save, Upload } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -25,19 +27,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Settings,
-  Key,
-  Sparkles,
-  Upload,
-  Save,
-  Menu,
-  LogOut,
-  Home,
-} from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useLocation } from "wouter";
 import type { File, ChatMessage, AIModel, AIService } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 export default function IDEPage() {
   const [, params] = useRoute("/ide/:projectId");
@@ -53,6 +44,43 @@ export default function IDEPage() {
   const [showSystemPromptModal, setShowSystemPromptModal] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [projectName, setProjectName] = useState("Untitled Project");
+  const [firstAIRequest, setFirstAIRequest] = useState(false);
+
+  const projectId = params?.projectId || "";
+
+  // Check usage and API keys
+  const { data: usage } = useQuery({
+    queryKey: ["usage", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/usage?userId=${user?.id}`);
+      if (!response.ok) throw new Error("Failed to fetch usage");
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: apiKeys } = useQuery({
+    queryKey: ["api-keys", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/api-keys?userId=${user?.id}`);
+      if (!response.ok) throw new Error("Failed to fetch API keys");
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
+  // Auto-show API key modal when limit reached and no keys configured
+  useEffect(() => {
+    if (usage?.limitReached && (!apiKeys || apiKeys.length === 0) && firstAIRequest) {
+      setShowApiKeyModal(true);
+      toast({
+        title: "Daily Limit Reached",
+        description: "Please add your own API key to continue using AI features.",
+        variant: "destructive",
+      });
+    }
+  }, [usage, apiKeys, firstAIRequest]);
+
 
   useEffect(() => {
     // Load project data
@@ -105,27 +133,33 @@ export default function IDEPage() {
     handleFileCreate("untitled.js", "/untitled.js");
   };
 
-  const handleSendMessage = async (content: string, model: AIModel) => {
-    const userMessage: ChatMessage = {
-      id: Math.random().toString(36),
-      projectId: params?.projectId || "",
-      role: "user",
-      content,
-      createdAt: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setAiLoading(true);
-
+  const handleSendMessage = async (message: string, model: AIModel) => {
+    setFirstAIRequest(true);
     try {
-      // TODO: Send to backend AI endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          projectId,
+          message,
+          model,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        if (data.limitReached) {
+          setShowApiKeyModal(true);
+        }
+        throw new Error(data.message);
+      }
 
       const assistantMessage: ChatMessage = {
         id: Math.random().toString(36),
-        projectId: params?.projectId || "",
+        projectId: projectId,
         role: "assistant",
-        content: `This is a demo response. Backend integration coming soon!\n\nYou asked: "${content}"\n\nUsing model: ${model}`,
+        content: data.response,
         model,
         createdAt: new Date(),
       };
@@ -134,7 +168,7 @@ export default function IDEPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to get AI response. Please check your API keys.",
+        description: error instanceof Error ? error.message : "Failed to send message",
         variant: "destructive",
       });
     } finally {
@@ -200,8 +234,12 @@ export default function IDEPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {usage && (
+            <div className="text-xs px-3 py-1 rounded-full bg-muted border border-border">
+              {usage.remaining}/{usage.limit} requests remaining
+            </div>
+          )}
           <ThemeSwitcher />
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" data-testid="button-settings">
