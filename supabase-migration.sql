@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS projects (
   name TEXT NOT NULL,
   description TEXT,
   thumbnail_url TEXT,
-  is_public BOOLEAN DEFAULT FALSE,
   github_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -114,12 +113,12 @@ CREATE POLICY "Users can update their own profile" ON profiles FOR UPDATE USING 
 CREATE POLICY "Users can insert their own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Projects policies
-CREATE POLICY "Users can view their own projects or public projects" ON projects FOR SELECT USING (auth.uid() = user_id OR is_public = TRUE);
+CREATE POLICY "Users can view their own projects" ON projects FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage their own projects" ON projects FOR ALL USING (auth.uid() = user_id);
 
 -- Project files policies
 CREATE POLICY "Users can view files in accessible projects" ON project_files FOR SELECT USING (
-  EXISTS (SELECT 1 FROM projects WHERE projects.id = project_files.project_id AND (projects.user_id = auth.uid() OR projects.is_public = TRUE))
+  EXISTS (SELECT 1 FROM projects WHERE projects.id = project_files.project_id AND projects.user_id = auth.uid())
 );
 CREATE POLICY "Users can manage files in their projects" ON project_files FOR ALL USING (
   EXISTS (SELECT 1 FROM projects WHERE projects.id = project_files.project_id AND projects.user_id = auth.uid())

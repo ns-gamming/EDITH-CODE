@@ -1,4 +1,4 @@
-import { GoogleAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
@@ -12,7 +12,7 @@ export async function generateCode(
     throw new Error("Gemini API key is required. Please add your API key in settings.");
   }
 
-  const genAI = userApiKey ? new GoogleAI({ apiKey: userApiKey }) : GEMINI_API_KEY ? new GoogleAI({ apiKey: GEMINI_API_KEY }) : null;
+  const genAI = userApiKey ? new GoogleGenerativeAI(userApiKey) : GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
   if (!genAI) {
     throw new Error("Gemini client not initialized. Please check your API key.");
@@ -44,7 +44,7 @@ export async function analyzeImage(
     throw new Error("Gemini API key is required for image analysis.");
   }
 
-  const genAI = userApiKey ? new GoogleAI({ apiKey: userApiKey }) : GEMINI_API_KEY ? new GoogleAI({ apiKey: GEMINI_API_KEY }) : null;
+  const genAI = userApiKey ? new GoogleGenerativeAI(userApiKey) : GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
   if (!genAI) {
     throw new Error("Gemini client not initialized. Please check your API key.");
@@ -83,7 +83,7 @@ export async function chatWithAI(
     throw new Error("Gemini API key is required.");
   }
 
-  const genAI = userApiKey ? new GoogleAI({ apiKey: userApiKey }) : GEMINI_API_KEY ? new GoogleAI({ apiKey: GEMINI_API_KEY }) : null;
+  const genAI = userApiKey ? new GoogleGenerativeAI(userApiKey) : GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
   if (!genAI) {
     throw new Error("Gemini client not initialized. Please check your API key.");
