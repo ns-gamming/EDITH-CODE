@@ -88,42 +88,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Router>
-          <AuthProvider>
-            <ThemeProvider>
-              <Toaster />
-              <Switch>
-                <Route path="/" component={LandingPage} />
-                <Route path="/auth">
-                  <PublicRoute>
-                    <AuthPage />
-                  </PublicRoute>
-                </Route>
-                <Route path="/privacy-policy" component={PrivacyPolicyPage} />
-                <Route path="/terms" component={TermsPage} />
-                <Route path="/disclaimer" component={DisclaimerPage} />
-                <Route path="/dashboard">
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                </Route>
-                <Route path="/profile">
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                </Route>
-                <Route path="/ide">
-                  <ProtectedRoute>
-                    <IDEPage />
-                  </ProtectedRoute>
-                </Route>
-                <Route component={NotFound} />
-              </Switch>
-            </ThemeProvider>
-          </AuthProvider>
-        </Router>
-      </TooltipProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
