@@ -20,7 +20,7 @@ import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, loading } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -30,15 +30,6 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
 
   if (loading) {
     return <LoadingAnimation />;
-  }
-
-  // If user is not authenticated and trying to access protected routes
-  const isProtectedRoute = ['/dashboard', '/ide', '/profile'].some(route => 
-    location.pathname.startsWith(route)
-  );
-
-  if (!loading && !user && isProtectedRoute) {
-    return <Redirect to="/auth" />;
   }
 
   if (!user) {
@@ -73,10 +64,18 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
-      <Route path="/auth" component={() => <PublicRoute component={AuthPage} />} />
-      <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
-      <Route path="/ide/:projectId?" component={() => <ProtectedRoute component={IDEPage} />} />
-      <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
+      <Route path="/auth">
+        <PublicRoute component={AuthPage} />
+      </Route>
+      <Route path="/dashboard">
+        <ProtectedRoute component={DashboardPage} />
+      </Route>
+      <Route path="/ide/:projectId?">
+        <ProtectedRoute component={IDEPage} />
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute component={ProfilePage} />
+      </Route>
       <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/disclaimer" component={DisclaimerPage} />

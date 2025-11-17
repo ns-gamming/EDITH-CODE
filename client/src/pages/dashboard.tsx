@@ -38,11 +38,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       if (!user?.id) {
-        // If no user, redirect to auth after a short delay
-        const timer = setTimeout(() => {
-          setLocation('/auth');
-        }, 1000);
-        return () => clearTimeout(timer);
+        return;
       }
       try {
         const response = await fetch(`/api/projects?userId=${user.id}`);
