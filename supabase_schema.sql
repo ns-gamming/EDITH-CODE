@@ -4,35 +4,45 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing policies to avoid conflicts
-DROP POLICY IF EXISTS "Users can view their own profile" ON users;
-DROP POLICY IF EXISTS "Users can update their own profile" ON users;
-DROP POLICY IF EXISTS "Users can insert their own profile" ON users;
-DROP POLICY IF EXISTS "Users can view their own projects" ON projects;
-DROP POLICY IF EXISTS "Users can create projects" ON projects;
-DROP POLICY IF EXISTS "Users can update their own projects" ON projects;
-DROP POLICY IF EXISTS "Users can delete their own projects" ON projects;
-DROP POLICY IF EXISTS "Users can view files in their projects" ON files;
-DROP POLICY IF EXISTS "Users can create files in their projects" ON files;
-DROP POLICY IF EXISTS "Users can update files in their projects" ON files;
-DROP POLICY IF EXISTS "Users can delete files in their projects" ON files;
+-- Drop existing table and policies if they exist
+DROP TABLE IF EXISTS users CASCADE;
 
--- Create users table
-CREATE TABLE IF NOT EXISTS users (
+-- Create users table with correct schema
+CREATE TABLE users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   username TEXT UNIQUE,
   bio TEXT,
   avatar_url TEXT,
-  github_username TEXT,
   occupation TEXT,
   experience_level TEXT,
   favorite_languages TEXT[],
   project_goals TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Enable RLS
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own profile" ON users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON users;
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON users;
+
+-- Create policies
+CREATE POLICY "Users can view their own profile"
+  ON users FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+  ON users FOR UPDATE
+  USING (auth.uid() = id);
+
+CREATE POLICY "Enable insert for authenticated users only"
+  ON users FOR INSERT
+  WITH CHECK (auth.uid() = id);
 
 -- Create projects table
 CREATE TABLE IF NOT EXISTS projects (
@@ -57,20 +67,11 @@ CREATE TABLE IF NOT EXISTS files (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security for projects and files
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 
--- Users policies
-CREATE POLICY "Users can view their own profile" ON users
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile" ON users
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Users can insert their own profile" ON users
-  FOR INSERT WITH CHECK (auth.uid() = id);
+-- Users policies (already defined above)
 
 -- Projects policies
 CREATE POLICY "Users can view their own projects" ON projects
@@ -122,22 +123,44 @@ CREATE POLICY "Users can delete files in their projects" ON files
     )
   );
 
--- Create function to handle user creation
-CREATE OR REPLACE FUNCTION handle_new_user()
+-- Create function to handle new user creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, full_name)
+  INSERT INTO public.users (id, email, full_name, username)
   VALUES (
-    new.id,
-    new.email,
-    COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', '')
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'username', SPLIT_PART(NEW.email, '@', 1))
   );
-  RETURN new;
+  RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create trigger for new user signup
+-- Drop existing trigger if it exists
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Create trigger for new user creation
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS on_user_updated ON users;
+
+-- Create trigger for updated_at
+CREATE TRIGGER on_user_updated
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_updated_at();

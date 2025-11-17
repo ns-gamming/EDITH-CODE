@@ -21,14 +21,7 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading EDITH...</p>
-        </div>
-      </div>
-    );
+    return <LoadingAnimation />;
   }
 
   if (!user) {
@@ -42,14 +35,7 @@ function PublicRoute({ component: Component }: { component: () => JSX.Element })
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading EDITH...</p>
-        </div>
-      </div>
-    );
+    return <LoadingAnimation />;
   }
 
   if (user) {

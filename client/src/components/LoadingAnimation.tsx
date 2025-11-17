@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 export function LoadingAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

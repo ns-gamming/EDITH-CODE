@@ -82,8 +82,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq("id", userId)
         .single();
 
-      if (error) throw error;
-      setProfile(data as User);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+      
+      if (data) {
+        setProfile(data as User);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
@@ -131,8 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (authError) throw authError;
     if (!authData.user) throw new Error("No user data returned");
 
-    // Wait a moment for the trigger to create the user record
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for the trigger to create the user record
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Update user profile with additional information
     const { error: profileError } = await supabase
@@ -140,11 +146,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .update({
         full_name: data.fullName,
         username: data.username,
-        bio: data.bio,
-        occupation: data.occupation,
-        experience_level: data.experienceLevel,
-        favorite_languages: data.favoriteLanguages,
-        project_goals: data.projectGoals,
+        bio: data.bio || null,
+        occupation: data.occupation || null,
+        experience_level: data.experienceLevel || null,
+        favorite_languages: data.favoriteLanguages || null,
+        project_goals: data.projectGoals || null,
       })
       .eq('id', authData.user.id);
 
