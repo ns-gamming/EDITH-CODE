@@ -50,9 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session.user);
           try {
             const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
+              .from('users')
               .select('*')
-              .eq('user_id', session.user.id)
+              .eq('id', session.user.id)
               .single();
 
             if (profileError) {
@@ -74,7 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);

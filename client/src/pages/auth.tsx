@@ -144,10 +144,14 @@ export default function AuthPage() {
     
     setLoading(true);
     try {
+      const redirectUrl = window.location.hostname === 'localhost' 
+        ? `${window.location.origin}/dashboard`
+        : 'https://edith-code.vercel.app/dashboard';
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: redirectUrl,
           scopes: provider === 'github' ? 'read:user user:email repo' : undefined,
         },
       });

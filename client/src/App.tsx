@@ -64,18 +64,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
-      <Route path="/auth">
-        <PublicRoute component={AuthPage} />
-      </Route>
-      <Route path="/dashboard">
-        <ProtectedRoute component={DashboardPage} />
-      </Route>
-      <Route path="/ide/:projectId?">
-        <ProtectedRoute component={IDEPage} />
-      </Route>
-      <Route path="/profile">
-        <ProtectedRoute component={ProfilePage} />
-      </Route>
+      <Route path="/auth" component={() => <PublicRoute component={AuthPage} />} />
+      <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
+      <Route path="/ide/:projectId?" component={() => <ProtectedRoute component={IDEPage} />} />
+      <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
       <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/disclaimer" component={DisclaimerPage} />
