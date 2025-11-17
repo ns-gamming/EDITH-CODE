@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!authData.user) throw new Error("No user data returned");
 
     // Wait for the trigger to create the user record
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Update user profile with additional information
     const { error: profileError } = await supabase
@@ -156,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (profileError) {
       console.error("Profile update error:", profileError);
+      // Don't throw - allow user creation to succeed even if profile update fails
     }
 
     await fetchProfile(authData.user.id);
