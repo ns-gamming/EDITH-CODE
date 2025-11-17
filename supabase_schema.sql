@@ -1,3 +1,4 @@
+
 -- ═══════════════════════════════════════════════════════════════
 -- VIBECODER / EDITH - Complete Database Schema with RLS
 -- Created by NS GAMMING / Nishant Sarkar

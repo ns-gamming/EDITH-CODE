@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,49 +16,36 @@ import DisclaimerPage from "@/pages/disclaimer";
 import NotFound from "@/pages/not-found";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      setLocation("/auth");
-    }
-  }, [user, setLocation]);
+  if (loading) {
+    return <LoadingAnimation />;
+  }
 
   if (!user) {
-    return null;
+    return <Redirect to="/auth" />;
   }
 
   return <Component />;
 }
 
 function PublicRoute({ component: Component }: { component: () => JSX.Element }) {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      setLocation("/dashboard");
-    }
-  }, [user, setLocation]);
+  if (loading) {
+    return <LoadingAnimation />;
+  }
 
   if (user) {
-    return null;
+    return <Redirect to="/dashboard" />;
   }
 
   return <Component />;
 }
 
 function Router() {
-  const { loading } = useAuth();
-
-  if (loading) {
-    return <LoadingAnimation />;
-  }
-
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
@@ -78,12 +65,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <TooltipProvider>
+        <TooltipProvider>
+          <AuthProvider>
             <Router />
             <Toaster />
-          </TooltipProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
