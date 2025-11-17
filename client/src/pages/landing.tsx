@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Fluid3DBackground } from "@/components/Fluid3DBackground";
 import { ArrowRight, Code2, Sparkles, Zap, Rocket, Users, Shield, Terminal, Layers, GitBranch } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
@@ -12,9 +11,214 @@ export default function LandingPage() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     setTimeout(() => setIsLoaded(true), 100);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles: Array<{
+      x: number;
+      y: number;
+      z: number;
+      vx: number;
+      vy: number;
+      vz: number;
+      size: number;
+      color: string;
+      trail: Array<{ x: number; y: number; opacity: number }>;
+      rotation: number;
+      rotationSpeed: number;
+    }> = [];
+
+    const colors = [
+      "#00FF41", "#00D9FF", "#FF0080", "#7B68EE", 
+      "#FFD700", "#00FFA3", "#FF1493", "#00BFFF"
+    ];
+    const particleCount = 200;
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        z: Math.random() * 1500,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: (Math.random() - 0.5) * 1.2,
+        vz: (Math.random() - 0.5) * 3,
+        size: Math.random() * 4 + 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        trail: [],
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.02,
+      });
+    }
+
+    let mouseX = canvas.width / 2;
+    let mouseY = canvas.height / 2;
+    let time = 0;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("resize", handleResize);
+
+    const animate = () => {
+      time += 0.005;
+      
+      ctx.fillStyle = "rgba(10, 10, 15, 0.12)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p, i) => {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        const spiralSpeed = 0.0015;
+        const dx = p.x - centerX;
+        const dy = p.y - centerY;
+        const angle = Math.atan2(dy, dx) + spiralSpeed;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const targetDistance = distance * (1 + Math.sin(time + i * 0.1) * 0.01);
+
+        p.x = centerX + Math.cos(angle) * targetDistance;
+        p.y = centerY + Math.sin(angle) * targetDistance;
+
+        const mdx = mouseX - p.x;
+        const mdy = mouseY - p.y;
+        const mouseDistance = Math.sqrt(mdx * mdx + mdy * mdy);
+
+        if (mouseDistance < 250) {
+          const force = (250 - mouseDistance) / 250;
+          const angle = Math.atan2(mdy, mdx);
+          p.vx += Math.cos(angle) * force * 0.5;
+          p.vy += Math.sin(angle) * force * 0.5;
+        }
+
+        p.y += Math.sin(time * 2 + i * 0.15) * 0.8;
+        p.x += Math.cos(time * 2 + i * 0.15) * 0.6;
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.z += p.vz;
+
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.vz *= 0.96;
+
+        if (p.x < -50) p.x = canvas.width + 50;
+        if (p.x > canvas.width + 50) p.x = -50;
+        if (p.y < -50) p.y = canvas.height + 50;
+        if (p.y > canvas.height + 50) p.y = -50;
+        if (p.z < 0) p.z = 1500;
+        if (p.z > 1500) p.z = 0;
+
+        p.rotation += p.rotationSpeed;
+
+        const perspective = 1200 / (1200 + p.z);
+        const x3d = (p.x - canvas.width / 2) * perspective + canvas.width / 2;
+        const y3d = (p.y - canvas.height / 2) * perspective + canvas.height / 2;
+        const size3d = p.size * perspective;
+
+        p.trail.push({ x: x3d, y: y3d, opacity: 1 });
+        if (p.trail.length > 8) p.trail.shift();
+
+        p.trail.forEach((t, idx) => {
+          t.opacity *= 0.85;
+          const trailSize = size3d * (idx / p.trail.length);
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, trailSize, 0, Math.PI * 2);
+          ctx.fillStyle = p.color + Math.floor(t.opacity * 100).toString(16).padStart(2, '0');
+          ctx.fill();
+        });
+
+        particles.forEach((p2, j) => {
+          if (i === j) return;
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dz = p.z - p2.z;
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+          if (dist < 120) {
+            const opacity = (1 - dist / 120) * 0.4;
+            const perspective2 = 1200 / (1200 + p2.z);
+            const x3d2 = (p2.x - canvas.width / 2) * perspective2 + canvas.width / 2;
+            const y3d2 = (p2.y - canvas.height / 2) * perspective2 + canvas.height / 2;
+            
+            const gradient = ctx.createLinearGradient(x3d, y3d, x3d2, y3d2);
+            gradient.addColorStop(0, p.color + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
+            gradient.addColorStop(1, p2.color + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
+            
+            ctx.beginPath();
+            ctx.moveTo(x3d, y3d);
+            ctx.lineTo(x3d2, y3d2);
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        });
+
+        const glowGradient = ctx.createRadialGradient(x3d, y3d, 0, x3d, y3d, size3d * 6);
+        glowGradient.addColorStop(0, p.color + "FF");
+        glowGradient.addColorStop(0.3, p.color + "AA");
+        glowGradient.addColorStop(0.6, p.color + "44");
+        glowGradient.addColorStop(1, p.color + "00");
+
+        ctx.beginPath();
+        ctx.arc(x3d, y3d, size3d * 6, 0, Math.PI * 2);
+        ctx.fillStyle = glowGradient;
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(x3d, y3d);
+        ctx.rotate(p.rotation);
+
+        const coreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size3d * 2);
+        coreGradient.addColorStop(0, "#FFFFFF");
+        coreGradient.addColorStop(0.3, p.color);
+        coreGradient.addColorStop(1, p.color + "00");
+
+        ctx.beginPath();
+        ctx.arc(0, 0, size3d * 2, 0, Math.PI * 2);
+        ctx.fillStyle = coreGradient;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, size3d, 0, Math.PI * 2);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.restore();
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -24,8 +228,8 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative w-full overflow-x-hidden">
-      <Fluid3DBackground />
+    <div className="relative w-full overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
+      <canvas ref={canvasRef} className="fixed inset-0 opacity-70 pointer-events-none z-0" />
 
       {/* Quick Navigation */}
       <motion.nav 
