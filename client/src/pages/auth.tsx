@@ -178,9 +178,9 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 p-4 perspective-1000">
       {!isSupabaseConfigured() && (
-        <Alert className="absolute top-4 left-4 right-4 max-w-2xl mx-auto bg-destructive/10 border-destructive">
+        <Alert className="absolute top-4 left-4 right-4 max-w-2xl mx-auto bg-destructive/10 border-destructive animate-float">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Configuration Required</AlertTitle>
           <AlertDescription>
@@ -189,7 +189,7 @@ export default function AuthPage() {
         </Alert>
       )}
       <div className="container max-w-5xl mx-auto">
-        <div className={`bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-purple-500/30 transition-all duration-500 ${isSignUp ? 'min-h-[700px]' : 'min-h-[600px]'}`}>
+        <div className={`bg-gray-900/80 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-purple-500/30 transition-all duration-500 transform-3d hover:rotate-y-2 animate-glow ${isSignUp ? 'min-h-[700px]' : 'min-h-[600px]'}`}>
           <div className="grid md:grid-cols-2">
             {/* Sign In Form */}
             {!isSignUp && (
@@ -205,14 +205,14 @@ export default function AuthPage() {
                   <button
                     onClick={() => handleOAuthSignIn('google')}
                     disabled={loading || !isSupabaseConfigured()}
-                    className="flex-1 p-3 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 transition-all"
+                    className="flex-1 p-3 bg-gradient-to-br from-red-600 to-yellow-500 border border-red-500/50 rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-red-500/50 transition-all duration-300 transform-3d"
                   >
                     <SiGoogle className="w-5 h-5 mx-auto text-white" />
                   </button>
                   <button
                     onClick={() => handleOAuthSignIn('github')}
                     disabled={loading || !isSupabaseConfigured()}
-                    className="flex-1 p-3 bg-gray-800 border border-gray-700 rounded-xl hover:bg-gray-700 transition-all"
+                    className="flex-1 p-3 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600/50 rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform-3d"
                   >
                     <SiGithub className="w-5 h-5 mx-auto text-white" />
                   </button>
@@ -256,7 +256,7 @@ export default function AuthPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 transform-3d"
                     disabled={loading || !isSupabaseConfigured()}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -289,10 +289,38 @@ export default function AuthPage() {
                   </h1>
                   <p className="text-gray-400">Step {signupStep} of 3 - Let's get to know you</p>
                   <div className="flex gap-2 mt-4">
-                    <div className={`h-1 flex-1 rounded ${signupStep >= 1 ? 'bg-cyan-500' : 'bg-gray-700'}`} />
-                    <div className={`h-1 flex-1 rounded ${signupStep >= 2 ? 'bg-cyan-500' : 'bg-gray-700'}`} />
-                    <div className={`h-1 flex-1 rounded ${signupStep >= 3 ? 'bg-cyan-500' : 'bg-gray-700'}`} />
+                    <div className={`h-1 flex-1 rounded transition-all duration-500 ${signupStep >= 1 ? 'bg-cyan-500 shadow-lg shadow-cyan-500/50' : 'bg-gray-700'}`} />
+                    <div className={`h-1 flex-1 rounded transition-all duration-500 ${signupStep >= 2 ? 'bg-cyan-500 shadow-lg shadow-cyan-500/50' : 'bg-gray-700'}`} />
+                    <div className={`h-1 flex-1 rounded transition-all duration-500 ${signupStep >= 3 ? 'bg-cyan-500 shadow-lg shadow-cyan-500/50' : 'bg-gray-700'}`} />
                   </div>
+                  {signupStep === 1 && (
+                    <>
+                      <div className="flex gap-3 mt-6">
+                        <button
+                          onClick={() => handleOAuthSignIn('google')}
+                          disabled={loading || !isSupabaseConfigured()}
+                          className="flex-1 p-3 bg-gradient-to-br from-red-600 to-yellow-500 border border-red-500/50 rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-red-500/50 transition-all duration-300 transform-3d"
+                        >
+                          <SiGoogle className="w-5 h-5 mx-auto text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleOAuthSignIn('github')}
+                          disabled={loading || !isSupabaseConfigured()}
+                          className="flex-1 p-3 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600/50 rounded-xl hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 transform-3d"
+                        >
+                          <SiGithub className="w-5 h-5 mx-auto text-white" />
+                        </button>
+                      </div>
+                      <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-700"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-gray-900 px-2 text-gray-500">or use email</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {signupStep === 1 && (

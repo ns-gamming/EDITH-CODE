@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -84,12 +83,12 @@ export default function LandingPage() {
         const rotationSpeed = 0.001;
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-        
+
         const dx = p.x - centerX;
         const dy = p.y - centerY;
         const angle = Math.atan2(dy, dx) + rotationSpeed;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
         p.x = centerX + Math.cos(angle) * distance;
         p.y = centerY + Math.sin(angle) * distance;
 
@@ -183,7 +182,7 @@ export default function LandingPage() {
   return (
     <div className="relative w-full overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
       <canvas ref={canvasRef} className="fixed inset-0 opacity-60 pointer-events-none" />
-      
+
       {/* Quick Navigation */}
       <motion.nav 
         className="fixed top-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-md bg-card/40 border border-primary/20 rounded-full px-6 py-3 shadow-2xl shadow-primary/20"
@@ -502,6 +501,39 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Quick Nav Section */}
+      <section className="py-20 bg-gradient-to-b from-black/40 to-black/60">
+        <div className="container mx-auto px-6">
+          <h2 className="text-5xl font-bold text-center mb-16 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+            Quick Navigation
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { title: "Dashboard", desc: "Manage your projects", icon: "📊", link: "/dashboard" },
+              { title: "IDE", desc: "Start coding now", icon: "💻", link: "/ide" },
+              { title: "Profile", desc: "Your account settings", icon: "👤", link: "/profile" },
+              { title: "Documentation", desc: "Learn how to use EDITH", icon: "📚", link: "#features" }
+            ].map((item, index) => (
+              <a
+                key={index}
+                href={item.link}
+                className="group bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl p-8 rounded-2xl border border-cyan-500/30 hover:border-cyan-400 transition-all duration-500 transform-3d hover:scale-105 hover:rotate-y-6 hover:shadow-2xl hover:shadow-cyan-500/30"
+              >
+                <div className="text-5xl mb-4 transform group-hover:scale-125 transition-transform duration-300">
+                  {item.icon}
+                </div>
+                <h3 className="text-2xl font-bold mb-2 text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-gray-400 group-hover:text-gray-300 transition-colors">
+                  {item.desc}
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section id="cta" className="relative min-h-screen flex items-center justify-center px-4 py-20">
         <motion.div
@@ -538,8 +570,14 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative py-12 border-t border-primary/20 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+      <footer className="bg-black/40 backdrop-blur-md py-12 mt-20">
+        <div className="container mx-auto px-6 text-center">
+          <div className="mb-8">
+            <h3 className="text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              VibeCoder
+            </h3>
+            <p className="text-gray-400">Powered by EDITH - Your AI Coding Partner</p>
+          </div>
           <p className="text-muted-foreground mb-2">
             Created by <span className="font-bold text-primary">NISHANT SARKAR</span>
           </p>

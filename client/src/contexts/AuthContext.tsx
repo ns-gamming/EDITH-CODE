@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (signupData: {
+  const signUp = async (data: {
     email: string;
     password: string;
     fullName: string;
@@ -113,41 +113,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     favoriteLanguages?: string[];
     projectGoals?: string;
   }) => {
-    if (!supabase) throw new Error(getSupabaseConfigError());
-    const { data, error } = await supabase.auth.signUp({
-      email: signupData.email,
-      password: signupData.password,
+    if (!supabase) {
+      throw new Error(getSupabaseConfigError());
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
       options: {
         data: {
-          full_name: signupData.fullName,
-          username: signupData.username,
-          // Ensure other profile fields are also passed if needed by Supabase RLS or schema
-        },
-      },
+          full_name: data.fullName,
+          username: data.username,
+        }
+      }
     });
 
-    if (error) throw error;
+    if (authError) throw authError;
+    if (!authData.user) throw new Error("No user data returned");
 
-    if (data.user) {
-      // Separate profile data from auth data
-      const userDataToInsert = {
-        id: data.user.id,
-        email: signupData.email,
-        fullName: signupData.fullName,
-        username: signupData.username,
-        bio: signupData.bio,
-        skills: signupData.favoriteLanguages || [],
-      };
+    // Update user profile with additional information
+    const { error: profileError } = await supabase
+      .from('users')
+      .update({
+        full_name: data.fullName,
+        username: data.username,
+        bio: data.bio,
+        occupation: data.occupation,
+        experience_level: data.experienceLevel,
+        favorite_languages: data.favoriteLanguages,
+        project_goals: data.projectGoals,
+      })
+      .eq('id', authData.user.id);
 
-      const { error: userError } = await supabase
-        .from("users")
-        .insert(userDataToInsert as any);
-
-      if (userError) {
-        console.error("User creation error:", userError);
-        throw userError;
-      }
-      await fetchProfile(data.user.id); // Fetch the newly created user profile
+    if (profileError) {
+      console.error("Profile update error:", profileError);
+      // Don't throw here, user is created, profile update can happen later
     }
   };
 
