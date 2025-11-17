@@ -48,23 +48,23 @@ export default function LandingPage() {
       "#9D00FF", "#00FFFF", "#FF6B6B", "#4ECDC4"
     ];
     
-    const particleCount = window.innerWidth > 768 ? 300 : 180;
-    const connectionDistance = 180;
-    const maxConnections = 8;
+    const particleCount = window.innerWidth > 768 ? 250 : 150;
+    const connectionDistance = 150;
+    const maxConnections = 6;
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        z: Math.random() * 2000,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        vz: (Math.random() - 0.5) * 2,
-        size: Math.random() * 3 + 1,
+        z: Math.random() * 1500,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        vz: (Math.random() - 0.5) * 1.5,
+        size: Math.random() * 1.5 + 0.5,
         color: colors[Math.floor(Math.random() * colors.length)],
         connections: [],
         pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: 0.02 + Math.random() * 0.03,
+        pulseSpeed: 0.015 + Math.random() * 0.02,
       });
     }
 
@@ -110,13 +110,13 @@ export default function LandingPage() {
         const mdy = mouseY - p.y;
         const mouseDistance = Math.sqrt(mdx * mdx + mdy * mdy);
 
-        if (mouseDistance < 300) {
-          const force = (300 - mouseDistance) / 300;
+        if (mouseDistance < 250) {
+          const force = (250 - mouseDistance) / 250;
           const angle = Math.atan2(mdy, mdx);
-          p.x += Math.cos(angle) * force * 1.5;
-          p.y += Math.sin(angle) * force * 1.5;
-          p.vx += (Math.random() - 0.5) * 0.2;
-          p.vy += (Math.random() - 0.5) * 0.2;
+          p.x += Math.cos(angle) * force * 1;
+          p.y += Math.sin(angle) * force * 1;
+          p.vx += (Math.random() - 0.5) * 0.15;
+          p.vy += (Math.random() - 0.5) * 0.15;
         }
 
         // Gentle velocity dampening
@@ -185,13 +185,13 @@ export default function LandingPage() {
             ctx.moveTo(x, y);
             ctx.lineTo(x2, y2);
             ctx.strokeStyle = gradient;
-            ctx.lineWidth = avgPerspective * 2.5;
+            ctx.lineWidth = avgPerspective * 1.5;
             ctx.stroke();
 
             // Add glow to connections
             ctx.strokeStyle = gradient;
-            ctx.lineWidth = avgPerspective * 1.2;
-            ctx.globalAlpha = opacity * 0.3;
+            ctx.lineWidth = avgPerspective * 0.8;
+            ctx.globalAlpha = opacity * 0.25;
             ctx.stroke();
             ctx.globalAlpha = 1;
           }
@@ -207,29 +207,29 @@ export default function LandingPage() {
         const size = p.size * perspective * pulseScale;
 
         // Outer glow
-        const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 8);
-        glowGradient.addColorStop(0, p.color + "CC");
-        glowGradient.addColorStop(0.4, p.color + "66");
+        const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 5);
+        glowGradient.addColorStop(0, p.color + "AA");
+        glowGradient.addColorStop(0.5, p.color + "44");
         glowGradient.addColorStop(1, p.color + "00");
 
         ctx.beginPath();
-        ctx.arc(x, y, size * 8, 0, Math.PI * 2);
+        ctx.arc(x, y, size * 5, 0, Math.PI * 2);
         ctx.fillStyle = glowGradient;
         ctx.fill();
 
         // Middle glow
-        const midGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+        const midGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
         midGradient.addColorStop(0, "#FFFFFF");
         midGradient.addColorStop(0.5, p.color);
         midGradient.addColorStop(1, p.color + "00");
 
         ctx.beginPath();
-        ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+        ctx.arc(x, y, size * 2, 0, Math.PI * 2);
         ctx.fillStyle = midGradient;
         ctx.fill();
 
         // Core particle
-        ctx.shadowBlur = 25;
+        ctx.shadowBlur = 12;
         ctx.shadowColor = p.color;
         ctx.beginPath();
         ctx.arc(x, y, size, 0, Math.PI * 2);

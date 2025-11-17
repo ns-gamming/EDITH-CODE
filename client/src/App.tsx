@@ -85,17 +85,45 @@ function Router() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
+      <TooltipProvider>
+        <Router>
           <AuthProvider>
-            <Router />
-            <Toaster />
+            <ThemeProvider>
+              <Toaster />
+              <Switch>
+                <Route path="/" component={LandingPage} />
+                <Route path="/auth">
+                  <PublicRoute>
+                    <AuthPage />
+                  </PublicRoute>
+                </Route>
+                <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+                <Route path="/terms" component={TermsPage} />
+                <Route path="/disclaimer" component={DisclaimerPage} />
+                <Route path="/dashboard">
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                </Route>
+                <Route path="/profile">
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                </Route>
+                <Route path="/ide">
+                  <ProtectedRoute>
+                    <IDEPage />
+                  </ProtectedRoute>
+                </Route>
+                <Route component={NotFound} />
+              </Switch>
+            </ThemeProvider>
           </AuthProvider>
-        </TooltipProvider>
-      </ThemeProvider>
+        </Router>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
