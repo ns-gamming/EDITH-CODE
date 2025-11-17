@@ -45,7 +45,7 @@ export function Fluid3DBackground() {
     ];
 
     const particleCount = window.innerWidth > 768 ? 250 : 150;
-    
+
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * canvas.width,
@@ -75,7 +75,7 @@ export function Fluid3DBackground() {
 
     const animate = () => {
       time += 0.008;
-      
+
       ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -83,12 +83,12 @@ export function Fluid3DBackground() {
         // Store trail position
         p.trail.push({x: p.x, y: p.y, z: p.z});
         if (p.trail.length > 8) p.trail.shift();
-        
+
         // Enhanced movement with wave patterns
         p.x += p.vx + Math.sin(time + i * 0.1) * 0.8;
         p.y += p.vy + Math.cos(time + i * 0.1) * 0.8;
         p.z += p.vz + Math.sin(time * 0.5) * 0.5;
-        
+
         // Update pulse
         p.pulse += 0.05;
 
@@ -127,7 +127,7 @@ export function Fluid3DBackground() {
           const tx = (pos.x - canvas.width / 2) * trailScale + canvas.width / 2;
           const ty = (pos.y - canvas.height / 2) * trailScale + canvas.height / 2;
           const trailOpacity = (idx / p.trail.length) * p.opacity * 0.3;
-          
+
           if (idx === 0) {
             ctx.moveTo(tx, ty);
           } else {
@@ -145,11 +145,11 @@ export function Fluid3DBackground() {
         gradient.addColorStop(0, `${p.color}${alpha}`);
         gradient.addColorStop(0.5, `${p.color}${Math.floor(p.opacity * 0.6 * 255).toString(16).padStart(2, '0')}`);
         gradient.addColorStop(1, `${p.color}00`);
-        
+
         ctx.fillStyle = gradient;
         ctx.arc(x, y, size * 3, 0, Math.PI * 2);
         ctx.fill();
-        
+
         // Core particle with enhanced glow
         ctx.shadowBlur = 15 * scale;
         ctx.shadowColor = p.color;

@@ -2,6 +2,15 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
+// Assume Sparkles component is imported from somewhere, e.g., './Sparkles'
+// For demonstration purposes, let's define a placeholder if it's not globally available
+const Sparkles = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21L12 17.77L5.82 21L7 14.14L2 9.27L8.91 8.26L12 2Z" className="fill-current"/>
+  </svg>
+);
+
+
 export function LoadingAnimation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

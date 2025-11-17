@@ -95,17 +95,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkSession = async () => {
     if (!supabase) {
+      console.warn('Supabase not configured');
       setLoading(false);
       return;
     }
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Session check error:", error);
+      }
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchProfile(session.user.id);
       }
     } catch (error) {
       console.error("Session check failed:", error);
+      setUser(null);
+      setProfile(null);
     } finally {
       setLoading(false);
     }

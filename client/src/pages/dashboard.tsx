@@ -38,27 +38,40 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       if (!user?.id) {
+        setProjects([]);
         return;
       }
       try {
-        const response = await fetch(`/api/projects?userId=${user.id}`);
+        const response = await fetch(`/api/projects?userId=${user.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          setProjects(data);
+          setProjects(Array.isArray(data) ? data : []);
         } else if (response.status === 401) {
+          console.log('Unauthorized, redirecting to auth');
           setLocation('/auth');
+        } else {
+          console.error('Failed to fetch projects:', response.status);
+          setProjects([]);
         }
       } catch (error) {
         console.error('Failed to fetch projects:', error);
+        setProjects([]);
         toast({
-          title: 'Error',
-          description: 'Failed to load projects. Please refresh the page.',
-          variant: 'destructive',
+          title: 'Info',
+          description: 'Starting fresh with no projects.',
         });
       }
     };
     
-    fetchProjects();
+    if (user?.id) {
+      fetchProjects();
+    }
   }, [user?.id, setLocation, toast]);
 
   const handleProjectOpen = (projectId: string) => {

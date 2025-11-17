@@ -105,14 +105,18 @@ export function AdvancedTerminal() {
             terminal.writeln("  \x1b[1;33mhelp\x1b[0m      - Show this help message");
             terminal.writeln("  \x1b[1;33mclear\x1b[0m     - Clear the terminal");
             terminal.writeln("  \x1b[1;33mecho\x1b[0m      - Echo back input");
-            terminal.writeln("  \x1b[1;33mls\x1b[0m        - List files");
+            terminal.writeln("  \x1b[1;33mls\x1b[0m        - List current directory");
             terminal.writeln("  \x1b[1;33mpwd\x1b[0m       - Print working directory");
-            terminal.writeln("  \x1b[1;33mnode\x1b[0m      - Run JavaScript");
-            terminal.writeln("  \x1b[1;33mpython3\x1b[0m   - Run Python");
+            terminal.writeln("  \x1b[1;33mdate\x1b[0m      - Show current date/time");
+            terminal.writeln("  \x1b[1;33mwhoami\x1b[0m    - Show current user");
             terminal.writeln("  \x1b[1;33mlang\x1b[0m      - Show supported languages");
             break;
           case "clear":
             terminal.clear();
+            terminal.writeln("\x1b[1;32m╔════════════════════════════════════════╗\x1b[0m");
+            terminal.writeln("\x1b[1;32m║     EDITH Advanced Terminal v2.0       ║\x1b[0m");
+            terminal.writeln("\x1b[1;32m╚════════════════════════════════════════╝\x1b[0m");
+            terminal.writeln("");
             break;
           case "lang":
             terminal.writeln("\x1b[1;36mSupported Languages:\x1b[0m");
@@ -120,12 +124,27 @@ export function AdvancedTerminal() {
               terminal.writeln(`  ${info.icon} \x1b[1;33m${lang}\x1b[0m - ${info.cmd} (*${info.ext})`);
             });
             break;
+          case "ls":
+            terminal.writeln("\x1b[1;36m📁 Files:\x1b[0m");
+            terminal.writeln("  \x1b[1;32m📄 index.html\x1b[0m");
+            terminal.writeln("  \x1b[1;32m📄 main.js\x1b[0m");
+            terminal.writeln("  \x1b[1;32m📄 styles.css\x1b[0m");
+            break;
+          case "pwd":
+            terminal.writeln("\x1b[1;36m/workspace/edith-ide\x1b[0m");
+            break;
+          case "date":
+            terminal.writeln(`\x1b[1;36m${new Date().toString()}\x1b[0m`);
+            break;
+          case "whoami":
+            terminal.writeln("\x1b[1;36mEDITH User\x1b[0m");
+            break;
           default:
             if (cmd.startsWith("echo ")) {
               terminal.writeln(cmd.substring(5));
-            } else {
-              terminal.writeln(`\x1b[1;31mCommand not found:\x1b[0m ${cmd}`);
-              terminal.writeln("\x1b[1;33mType 'help' for available commands\x1b[0m");
+            } else if (cmd.trim()) {
+              terminal.writeln(`\x1b[1;31m❌ Command not found:\x1b[0m ${cmd}`);
+              terminal.writeln("\x1b[1;33m💡 Type 'help' for available commands\x1b[0m");
             }
         }
       };
