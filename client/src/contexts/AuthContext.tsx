@@ -37,22 +37,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    let mounted = true;
+
     const initAuth = async () => {
       try {
-        // First check for any OAuth redirect
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        if (hashParams.get('access_token')) {
-          console.log('OAuth redirect detected, waiting for session...');
-        }
-
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
         if (error) {
           console.error('Session error:', error);
-          setLoading(false);
-          return;
-        }
-
-        if (session?.user) {
+        } else if (session?.user) {
           console.log('Session found:', session.user.id);
           setUser(session.user);
           await fetchProfile(session.user.id);
@@ -62,7 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Auth initialization error:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -70,6 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         console.log('Auth state changed:', event, session?.user?.id);
         
         if (event === 'SIGNED_IN' && session?.user) {
@@ -89,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

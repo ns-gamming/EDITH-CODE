@@ -63,33 +63,23 @@ function PublicRoute({ component: Component }: { component: () => JSX.Element })
 function Router() {
   return (
     <Switch>
-      <Route path="/">
-        {() => <LandingPage />}
-      </Route>
+      <Route path="/" component={LandingPage} />
       <Route path="/auth">
-        {() => <PublicRoute component={AuthPage} />}
+        <PublicRoute component={AuthPage} />
       </Route>
       <Route path="/dashboard">
-        {() => <ProtectedRoute component={DashboardPage} />}
+        <ProtectedRoute component={DashboardPage} />
       </Route>
       <Route path="/ide/:projectId?">
-        {() => <ProtectedRoute component={IDEPage} />}
+        <ProtectedRoute component={IDEPage} />
       </Route>
       <Route path="/profile">
-        {() => <ProtectedRoute component={ProfilePage} />}
+        <ProtectedRoute component={ProfilePage} />
       </Route>
-      <Route path="/privacy">
-        {() => <PrivacyPolicyPage />}
-      </Route>
-      <Route path="/terms">
-        {() => <TermsPage />}
-      </Route>
-      <Route path="/disclaimer">
-        {() => <DisclaimerPage />}
-      </Route>
-      <Route>
-        {() => <NotFound />}
-      </Route>
+      <Route path="/privacy" component={PrivacyPolicyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/disclaimer" component={DisclaimerPage} />
+      <Route component={NotFound} />
     </Switch>
   );
 }
