@@ -1,4 +1,3 @@
-
 -- EDITH Database Schema with Row Level Security (RLS) Policies
 -- This SQL file sets up all tables and security policies for Supabase
 
@@ -20,12 +19,13 @@ DROP POLICY IF EXISTS "Users can delete files in their projects" ON files;
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   username TEXT UNIQUE,
   bio TEXT,
   avatar_url TEXT,
+  github_username TEXT,
   occupation TEXT,
   experience_level TEXT,
   favorite_languages TEXT[],

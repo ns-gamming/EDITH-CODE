@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { MonacoEditor } from "@/components/MonacoEditor";
 import { FileTree } from "@/components/FileTree";
 import { AIChat } from "@/components/AIChat";
-import { Terminal } from "@/components/Terminal";
+import { AdvancedTerminal } from "@/components/AdvancedTerminal";
 import { LivePreview } from "@/components/LivePreview";
 import { FileUpload } from "@/components/FileUpload";
 import { APIKeyModal } from "@/components/APIKeyModal";
@@ -334,7 +334,7 @@ export default function IDEPage() {
                     <TabsTrigger value="preview" data-testid="tab-bottom-preview">Preview</TabsTrigger>
                   </TabsList>
                   <TabsContent value="terminal" className="flex-1 m-0">
-                    <Terminal />
+                    <AdvancedTerminal />
                   </TabsContent>
                   <TabsContent value="preview" className="flex-1 m-0">
                     <LivePreview files={files} />
