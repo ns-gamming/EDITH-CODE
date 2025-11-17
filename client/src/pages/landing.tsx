@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Fluid3DBackground } from "@/components/Fluid3DBackground";
 import { ArrowRight, Code2, Sparkles, Zap, Rocket, Users, Shield, Terminal, Layers, GitBranch } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
@@ -8,169 +9,12 @@ export default function LandingPage() {
   const [, setLocation] = useLocation();
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
   useEffect(() => {
     setTimeout(() => setIsLoaded(true), 100);
-  }, []);
-
-  // Enhanced 3D Particle System
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles: Array<{
-      x: number;
-      y: number;
-      z: number;
-      vx: number;
-      vy: number;
-      vz: number;
-      size: number;
-      color: string;
-      connections: number[];
-    }> = [];
-
-    const colors = ["#00FF41", "#FF0080", "#7B68EE", "#00D9FF"];
-    const particleCount = 150;
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        z: Math.random() * 1000,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: (Math.random() - 0.5) * 0.8,
-        vz: (Math.random() - 0.5) * 2,
-        size: Math.random() * 3 + 1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        connections: [],
-      });
-    }
-
-    let mouseX = canvas.width / 2;
-    let mouseY = canvas.height / 2;
-    let time = 0;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    };
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("resize", handleResize);
-
-    const animate = () => {
-      time += 0.01;
-      ctx.fillStyle = "rgba(15, 23, 42, 0.15)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((p, i) => {
-        const rotationSpeed = 0.001;
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-
-        const dx = p.x - centerX;
-        const dy = p.y - centerY;
-        const angle = Math.atan2(dy, dx) + rotationSpeed;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        p.x = centerX + Math.cos(angle) * distance;
-        p.y = centerY + Math.sin(angle) * distance;
-
-        const mdx = mouseX - p.x;
-        const mdy = mouseY - p.y;
-        const mouseDistance = Math.sqrt(mdx * mdx + mdy * mdy);
-
-        if (mouseDistance < 200) {
-          const force = (200 - mouseDistance) / 200;
-          const angle = Math.atan2(mdy, mdx);
-          p.vx += Math.cos(angle) * force * 0.3;
-          p.vy += Math.sin(angle) * force * 0.3;
-        }
-
-        p.y += Math.sin(time + i * 0.1) * 0.5;
-        p.x += Math.cos(time + i * 0.1) * 0.3;
-
-        p.x += p.vx;
-        p.y += p.vy;
-        p.z += p.vz;
-
-        p.vx *= 0.98;
-        p.vy *= 0.98;
-        p.vz *= 0.98;
-
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-        if (p.z < 0) p.z = 1000;
-        if (p.z > 1000) p.z = 0;
-
-        const perspective = 1000 / (1000 + p.z);
-        const x3d = (p.x - canvas.width / 2) * perspective + canvas.width / 2;
-        const y3d = (p.y - canvas.height / 2) * perspective + canvas.height / 2;
-        const size3d = p.size * perspective;
-
-        particles.forEach((p2, j) => {
-          if (i === j) return;
-          const dx = p.x - p2.x;
-          const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 100) {
-            const opacity = 1 - dist / 100;
-            ctx.beginPath();
-            ctx.moveTo(x3d, y3d);
-            const perspective2 = 1000 / (1000 + p2.z);
-            const x3d2 = (p2.x - canvas.width / 2) * perspective2 + canvas.width / 2;
-            const y3d2 = (p2.y - canvas.height / 2) * perspective2 + canvas.height / 2;
-            ctx.lineTo(x3d2, y3d2);
-            ctx.strokeStyle = `rgba(6, 182, 212, ${opacity * 0.3})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-        });
-
-        const gradient = ctx.createRadialGradient(x3d, y3d, 0, x3d, y3d, size3d * 3);
-        gradient.addColorStop(0, p.color);
-        gradient.addColorStop(0.5, p.color + "80");
-        gradient.addColorStop(1, p.color + "00");
-
-        ctx.beginPath();
-        ctx.arc(x3d, y3d, size3d * 3, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(x3d, y3d, size3d, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-      });
-
-      requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", handleResize);
-    };
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -180,8 +24,8 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative w-full overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
-      <canvas ref={canvasRef} className="fixed inset-0 opacity-60 pointer-events-none" />
+    <div className="relative w-full overflow-x-hidden">
+      <Fluid3DBackground />
 
       {/* Quick Navigation */}
       <motion.nav 

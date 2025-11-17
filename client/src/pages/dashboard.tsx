@@ -6,6 +6,9 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Fluid3DBackground } from "@/components/Fluid3DBackground";
+import { GitHubImport } from "@/components/GitHubImport";
+import { AIProjectCreator } from "@/components/AIProjectCreator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Settings, Plus, Search, TrendingUp, Zap, Code2, Sparkles } from "lucide-react";
+import { LogOut, Settings, Plus, Search, TrendingUp, Zap, Code2, Sparkles, FileCode, Rocket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Project } from "@shared/schema";
 
@@ -32,21 +35,51 @@ export default function DashboardPage() {
     else setGreeting("Good Evening");
   }, []);
 
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await fetch(`/api/projects?userId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProjects(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+      }
+    };
+    
+    fetchProjects();
+  }, [user?.id]);
+
   const handleProjectOpen = (projectId: string) => {
     setLocation(`/ide/${projectId}`);
   };
 
-  const handleProjectCreate = () => {
-    const newProject: Project = {
-      id: Math.random().toString(36),
-      userId: user?.id || "",
-      name: "New Project",
-      description: "A new AI-powered project",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setProjects((prev) => [...prev, newProject]);
-    setLocation(`/ide/${newProject.id}`);
+  const handleProjectCreate = async () => {
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          name: 'New Project',
+          description: 'A new AI-powered project',
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create project');
+      const newProject = await response.json();
+      
+      setProjects((prev) => [...prev, newProject]);
+      setLocation(`/ide/${newProject.id}`);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create project',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleProjectDelete = (projectId: string) => {
@@ -70,29 +103,8 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-primary/20 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      <Fluid3DBackground />
 
       {/* Top Navigation */}
       <motion.header
@@ -192,30 +204,72 @@ export default function DashboardPage() {
             </motion.p>
           </motion.div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions - Enhanced with AI & GitHub Tools */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"
+            className="mb-12 space-y-8"
           >
-            {quickActions.map((action, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * i }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={action.action}
-                className="p-6 rounded-2xl bg-card/40 backdrop-blur-xl border border-primary/20 hover:border-primary/50 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 group"
-              >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <action.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-lg">{action.label}</h3>
-              </motion.div>
-            ))}
+            <div>
+              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Create New Project
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full"
+                >
+                  <Button 
+                    variant="outline" 
+                    onClick={handleProjectCreate}
+                    className="w-full h-24 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30 hover:border-blue-500/50 transition-all"
+                  >
+                    <FileCode className="w-8 h-8 text-blue-400" />
+                    <div className="text-center">
+                      <div className="font-semibold text-sm">Blank Project</div>
+                      <div className="text-xs text-muted-foreground">Start from scratch</div>
+                    </div>
+                  </Button>
+                </motion.div>
+                
+                <AIProjectCreator 
+                  onProjectCreate={handleProjectOpen} 
+                  userId={user?.id || ''} 
+                />
+                
+                <GitHubImport 
+                  onImportComplete={handleProjectOpen} 
+                  userId={user?.id || ''} 
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {quickActions.map((action, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * i }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={action.action}
+                    className="p-6 rounded-2xl bg-card/40 backdrop-blur-xl border border-primary/20 hover:border-primary/50 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 group"
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                      <action.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-lg">{action.label}</h3>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
           {/* Projects Section */}

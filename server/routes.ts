@@ -238,6 +238,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/github/import", async (req: Request, res: Response) => {
+    try {
+      const { owner, repo, userId } = req.body;
+      
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+      if (!response.ok) throw new Error('Failed to fetch repository');
+      
+      const contents = await response.json();
+      
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .insert({
+          user_id: userId,
+          name: repo,
+          description: `Imported from ${owner}/${repo}`,
+          framework: 'imported'
+        })
+        .select()
+        .single();
+
+      if (projectError) throw projectError;
+      
+      const filesToImport = Array.isArray(contents) ? contents.filter((item: any) => item.type === 'file').slice(0, 20) : [];
+      
+      for (const file of filesToImport) {
+        const fileResponse = await fetch(file.download_url);
+        const content = await fileResponse.text();
+        
+        const language = file.name.endsWith('.js') ? 'javascript' :
+                        file.name.endsWith('.ts') ? 'typescript' :
+                        file.name.endsWith('.py') ? 'python' :
+                        file.name.endsWith('.html') ? 'html' :
+                        file.name.endsWith('.css') ? 'css' : 'plaintext';
+        
+        await supabase.from("files").insert({
+          project_id: project.id,
+          name: file.name,
+          path: `/${file.name}`,
+          content,
+          language
+        });
+      }
+      
+      res.json({ projectId: project.id });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/projects/ai-create", async (req: Request, res: Response) => {
+    try {
+      const { userId, prompt, framework } = req.body;
+      
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .insert({
+          user_id: userId,
+          name: `AI Project: ${prompt.slice(0, 30)}...`,
+          description: prompt,
+          framework
+        })
+        .select()
+        .single();
+
+      if (projectError) throw projectError;
+      
+      const aiPrompt = `Create a complete ${framework} project based on this description: ${prompt}. 
+      Generate file contents including index.html, main.js, and styles.css. 
+      Return JSON array with objects containing: name, content, language fields.`;
+      
+      const generatedFiles = await generateCode(aiPrompt, 'gemini-2.0-flash-exp');
+      
+      let files = [];
+      try {
+        files = JSON.parse(generatedFiles);
+      } catch {
+        files = [
+          { name: 'index.html', content: '<!DOCTYPE html><html><head><title>New Project</title></head><body><h1>Project Created</h1></body></html>', language: 'html' },
+          { name: 'main.js', content: 'console.log("Project initialized");', language: 'javascript' },
+          { name: 'styles.css', content: 'body { margin: 0; font-family: system-ui; }', language: 'css' }
+        ];
+      }
+      
+      for (const file of files) {
+        await supabase.from("files").insert({
+          project_id: project.id,
+          name: file.name,
+          path: `/${file.name}`,
+          content: file.content,
+          language: file.language
+        });
+      }
+      
+      res.json({ projectId: project.id });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // ===== FILE ROUTES =====
   
   app.get("/api/files", async (req: Request, res: Response) => {

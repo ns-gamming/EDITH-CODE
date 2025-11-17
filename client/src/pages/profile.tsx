@@ -125,10 +125,10 @@ export default function ProfilePage() {
         if (p.z < 0 || p.z > 1000) p.vz *= -1;
 
         const scale = 1000 / (1000 - p.z);
-        const size = p.size * scale * (1 + Math.sin(p.pulse) * 0.3);
+        const size = Math.max(0.1, p.size * scale * (1 + Math.sin(p.pulse) * 0.3));
         const opacity = 0.3 + Math.sin(p.pulse) * 0.3;
 
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 2);
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, Math.max(0.1, size * 2));
         gradient.addColorStop(0, p.color + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
         gradient.addColorStop(0.5, p.color + '44');
         gradient.addColorStop(1, p.color + '00');

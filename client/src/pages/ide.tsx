@@ -96,6 +96,32 @@ export default function IDEPage() {
     );
   };
 
+  useEffect(() => {
+    if (!files.length || !projectId) return;
+
+    const autoSaveTimeout = setTimeout(async () => {
+      try {
+        for (const file of files) {
+          if (file.id && file.id.length > 10) {
+            await fetch(`/api/files/${file.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                content: file.content, 
+                name: file.name, 
+                path: file.path 
+              }),
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      }
+    }, 3000);
+
+    return () => clearTimeout(autoSaveTimeout);
+  }, [files, projectId]);
+
   const handleFileSelect = (fileId: string) => {
     setActiveFileId(fileId);
   };
