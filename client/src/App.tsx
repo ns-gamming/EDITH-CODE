@@ -1,4 +1,5 @@
-import { Switch, Route, Redirect, useLocation } from "wouter";
+
+import { Switch, Route, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,7 +16,6 @@ import TermsPage from "@/pages/terms";
 import DisclaimerPage from "@/pages/disclaimer";
 import NotFound from "@/pages/not-found";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
@@ -63,15 +63,33 @@ function PublicRoute({ component: Component }: { component: () => JSX.Element })
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={LandingPage} />
-      <Route path="/auth" component={() => <PublicRoute component={AuthPage} />} />
-      <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
-      <Route path="/ide/:projectId?" component={() => <ProtectedRoute component={IDEPage} />} />
-      <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
-      <Route path="/privacy" component={PrivacyPolicyPage} />
-      <Route path="/terms" component={TermsPage} />
-      <Route path="/disclaimer" component={DisclaimerPage} />
-      <Route component={NotFound} />
+      <Route path="/">
+        {() => <LandingPage />}
+      </Route>
+      <Route path="/auth">
+        {() => <PublicRoute component={AuthPage} />}
+      </Route>
+      <Route path="/dashboard">
+        {() => <ProtectedRoute component={DashboardPage} />}
+      </Route>
+      <Route path="/ide/:projectId?">
+        {() => <ProtectedRoute component={IDEPage} />}
+      </Route>
+      <Route path="/profile">
+        {() => <ProtectedRoute component={ProfilePage} />}
+      </Route>
+      <Route path="/privacy">
+        {() => <PrivacyPolicyPage />}
+      </Route>
+      <Route path="/terms">
+        {() => <TermsPage />}
+      </Route>
+      <Route path="/disclaimer">
+        {() => <DisclaimerPage />}
+      </Route>
+      <Route>
+        {() => <NotFound />}
+      </Route>
     </Switch>
   );
 }

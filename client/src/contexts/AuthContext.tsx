@@ -39,6 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initAuth = async () => {
       try {
+        // First check for any OAuth redirect
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        if (hashParams.get('access_token')) {
+          console.log('OAuth redirect detected, waiting for session...');
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Session error:', error);
@@ -47,22 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (session?.user) {
+          console.log('Session found:', session.user.id);
           setUser(session.user);
-          try {
-            const { data: profileData, error: profileError } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-
-            if (profileError) {
-              console.error('Profile fetch error:', profileError);
-            } else if (profileData) {
-              setProfile(profileData);
-            }
-          } catch (profileErr) {
-            console.error('Profile error:', profileErr);
-          }
+          await fetchProfile(session.user.id);
+        } else {
+          console.log('No session found');
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -76,10 +71,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id);
-        setUser(session?.user ?? null);
-        if (session?.user) {
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setProfile(null);
+        } else if (session?.user) {
+          setUser(session.user);
           await fetchProfile(session.user.id);
         } else {
+          setUser(null);
           setProfile(null);
         }
       }
@@ -111,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     if (!supabase) return;
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -119,10 +123,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error("Error fetching profile:", error);
+        // Profile might not exist yet for OAuth users, that's okay
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, will be created by trigger');
+        }
         return;
       }
 
       if (data) {
+        console.log('Profile loaded:', data.username || data.email);
         setProfile(data as User);
       }
     } catch (error) {

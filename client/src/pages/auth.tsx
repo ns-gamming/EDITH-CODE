@@ -144,9 +144,13 @@ export default function AuthPage() {
     
     setLoading(true);
     try {
-      const redirectUrl = window.location.hostname === 'localhost' 
-        ? `${window.location.origin}/dashboard`
-        : 'https://edith-code.vercel.app/dashboard';
+      // Determine the correct redirect URL based on environment
+      const isProduction = window.location.hostname === 'edith-code.vercel.app';
+      const redirectUrl = isProduction 
+        ? 'https://edith-code.vercel.app/dashboard'
+        : `${window.location.origin}/dashboard`;
+      
+      console.log('OAuth redirect URL:', redirectUrl);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -155,8 +159,12 @@ export default function AuthPage() {
           scopes: provider === 'github' ? 'read:user user:email repo' : undefined,
         },
       });
+      
       if (error) throw error;
+      
+      // Don't set loading to false here - let the redirect happen
     } catch (error) {
+      console.error('OAuth error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "OAuth sign-in failed",
