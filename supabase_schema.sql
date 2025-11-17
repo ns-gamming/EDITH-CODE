@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
   full_name TEXT,
   username TEXT UNIQUE,
   bio TEXT,
+  avatar_url TEXT,
   occupation TEXT,
   experience_level TEXT,
   favorite_languages TEXT[],
   project_goals TEXT,
-  avatar_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
