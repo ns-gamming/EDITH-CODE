@@ -20,7 +20,7 @@ import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
   const { user, loading } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -30,6 +30,15 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
 
   if (loading) {
     return <LoadingAnimation />;
+  }
+
+  // If user is not authenticated and trying to access protected routes
+  const isProtectedRoute = ['/dashboard', '/ide', '/profile'].some(route => 
+    location.pathname.startsWith(route)
+  );
+
+  if (!loading && !user && isProtectedRoute) {
+    return <Redirect to="/auth" />;
   }
 
   if (!user) {

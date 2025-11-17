@@ -37,7 +37,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    checkSession();
+    const initAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session error:', error);
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          setUser(session.user);
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single();
+
+            if (profileError) {
+              console.error('Profile fetch error:', profileError);
+            } else if (profileData) {
+              setProfile(profileData);
+            }
+          } catch (profileErr) {
+            console.error('Profile error:', profileErr);
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -86,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error fetching profile:", error);
         return;
       }
-      
+
       if (data) {
         setProfile(data as User);
       }

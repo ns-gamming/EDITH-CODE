@@ -37,20 +37,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        // If no user, redirect to auth after a short delay
+        const timer = setTimeout(() => {
+          setLocation('/auth');
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
       try {
         const response = await fetch(`/api/projects?userId=${user.id}`);
         if (response.ok) {
           const data = await response.json();
           setProjects(data);
+        } else if (response.status === 401) {
+          setLocation('/auth');
         }
       } catch (error) {
         console.error('Failed to fetch projects:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load projects. Please refresh the page.',
+          variant: 'destructive',
+        });
       }
     };
     
     fetchProjects();
-  }, [user?.id]);
+  }, [user?.id, setLocation, toast]);
 
   const handleProjectOpen = (projectId: string) => {
     setLocation(`/ide/${projectId}`);
