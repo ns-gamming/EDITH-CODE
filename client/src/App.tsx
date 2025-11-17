@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import LandingPage from "@/pages/landing";
 import AuthPage from "@/pages/auth";
 import DashboardPage from "@/pages/dashboard";
 import IDEPage from "@/pages/ide";
@@ -61,14 +62,14 @@ function PublicRoute({ component: Component }: { component: () => JSX.Element })
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={LandingPage} />
       <Route path="/auth" component={() => <PublicRoute component={AuthPage} />} />
       <Route path="/dashboard" component={() => <ProtectedRoute component={DashboardPage} />} />
-      <Route path="/ide/:projectId" component={() => <ProtectedRoute component={IDEPage} />} />
+      <Route path="/ide/:projectId?" component={() => <ProtectedRoute component={IDEPage} />} />
       <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} />} />
       <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/disclaimer" component={DisclaimerPage} />
-      <Route path="/" component={() => <Redirect to="/dashboard" />} />
       <Route component={NotFound} />
     </Switch>
   );

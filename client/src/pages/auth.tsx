@@ -107,7 +107,7 @@ export default function AuthPage() {
         bio,
         occupation,
         experienceLevel,
-        favoriteLanguages,
+        favoriteLanguages: favoriteLanguages ? favoriteLanguages.split(',').map(lang => lang.trim()) : [],
         projectGoals,
       });
       toast({
@@ -126,6 +126,15 @@ export default function AuthPage() {
   };
 
   const handleOAuthSignIn = async (provider: 'google' | 'github') => {
+    if (!supabase) {
+      toast({
+        title: "Error",
+        description: "Supabase is not configured",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({

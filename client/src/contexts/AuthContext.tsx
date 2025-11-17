@@ -1,23 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, isSupabaseConfigured, getSupabaseConfigError } from "@/lib/supabase";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { User } from "@shared/schema";
 
-// Define UserProfile type if it's not already defined elsewhere
-interface UserProfile {
-  id: string;
-  full_name?: string;
-  username?: string;
-  bio?: string;
-  occupation?: string;
-  experience_level?: string;
-  favoriteLanguages?: string[];
-  projectGoals?: string;
-  created_at?: string;
-}
-
 interface AuthContextType {
-  user: User | null;
-  profile: UserProfile | null;
+  user: SupabaseUser | null;
+  profile: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (data: {
@@ -32,14 +20,14 @@ interface AuthContextType {
     projectGoals?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,13 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!supabase) return;
     try {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("users")
         .select("*")
         .eq("id", userId)
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      setProfile(data as User);
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
@@ -142,27 +130,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.user) {
       // Separate profile data from auth data
-      const profileDataToInsert: Partial<UserProfile> = {
+      const userDataToInsert = {
         id: data.user.id,
-        full_name: signupData.fullName,
+        email: signupData.email,
+        fullName: signupData.fullName,
         username: signupData.username,
         bio: signupData.bio,
-        occupation: signupData.occupation,
-        experience_level: signupData.experienceLevel,
-        favoriteLanguages: signupData.favoriteLanguages,
-        projectGoals: signupData.projectGoals,
-        created_at: new Date().toISOString(),
+        skills: signupData.favoriteLanguages || [],
       };
 
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert(profileDataToInsert);
+      const { error: userError } = await supabase
+        .from("users")
+        .insert(userDataToInsert as any);
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw profileError;
+      if (userError) {
+        console.error("User creation error:", userError);
+        throw userError;
       }
-      await fetchProfile(data.user.id); // Fetch the newly created profile
+      await fetchProfile(data.user.id); // Fetch the newly created user profile
     }
   };
 
@@ -173,13 +158,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = async (updates: Partial<User>) => {
     if (!supabase) throw new Error(getSupabaseConfigError());
     if (!user) throw new Error("No user logged in");
 
     const { error } = await supabase
-      .from("profiles")
-      .update(updates)
+      .from("users")
+      .update(updates as any)
       .eq("id", user.id);
 
     if (error) throw error;
