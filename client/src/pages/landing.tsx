@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -36,30 +37,34 @@ export default function LandingPage() {
       vz: number;
       size: number;
       color: string;
-      trail: Array<{ x: number; y: number; opacity: number }>;
-      rotation: number;
-      rotationSpeed: number;
+      connections: number[];
+      pulse: number;
+      pulseSpeed: number;
     }> = [];
 
     const colors = [
       "#00FF41", "#00D9FF", "#FF0080", "#7B68EE", 
-      "#FFD700", "#00FFA3", "#FF1493", "#00BFFF"
+      "#FFD700", "#00FFA3", "#FF1493", "#00BFFF",
+      "#9D00FF", "#00FFFF", "#FF6B6B", "#4ECDC4"
     ];
-    const particleCount = 200;
+    
+    const particleCount = window.innerWidth > 768 ? 300 : 180;
+    const connectionDistance = 180;
+    const maxConnections = 8;
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        z: Math.random() * 1500,
-        vx: (Math.random() - 0.5) * 1.2,
-        vy: (Math.random() - 0.5) * 1.2,
-        vz: (Math.random() - 0.5) * 3,
-        size: Math.random() * 4 + 2,
+        z: Math.random() * 2000,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: (Math.random() - 0.5) * 0.8,
+        vz: (Math.random() - 0.5) * 2,
+        size: Math.random() * 3 + 1,
         color: colors[Math.floor(Math.random() * colors.length)],
-        trail: [],
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.02,
+        connections: [],
+        pulse: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.02 + Math.random() * 0.03,
       });
     }
 
@@ -81,133 +86,156 @@ export default function LandingPage() {
     window.addEventListener("resize", handleResize);
 
     const animate = () => {
-      time += 0.005;
+      time += 0.01;
       
-      ctx.fillStyle = "rgba(10, 10, 15, 0.12)";
+      ctx.fillStyle = "rgba(10, 10, 15, 0.15)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Update particles
       particles.forEach((p, i) => {
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
 
-        const spiralSpeed = 0.0015;
-        const dx = p.x - centerX;
-        const dy = p.y - centerY;
-        const angle = Math.atan2(dy, dx) + spiralSpeed;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const targetDistance = distance * (1 + Math.sin(time + i * 0.1) * 0.01);
+        // Create flowing wave motion
+        const waveX = Math.sin(time + i * 0.05) * 1.2;
+        const waveY = Math.cos(time * 0.8 + i * 0.05) * 1.2;
+        const waveZ = Math.sin(time * 0.5 + i * 0.1) * 0.8;
 
-        p.x = centerX + Math.cos(angle) * targetDistance;
-        p.y = centerY + Math.sin(angle) * targetDistance;
+        p.x += p.vx + waveX;
+        p.y += p.vy + waveY;
+        p.z += p.vz + waveZ;
 
+        // Mouse interaction with magnetic effect
         const mdx = mouseX - p.x;
         const mdy = mouseY - p.y;
         const mouseDistance = Math.sqrt(mdx * mdx + mdy * mdy);
 
-        if (mouseDistance < 250) {
-          const force = (250 - mouseDistance) / 250;
+        if (mouseDistance < 300) {
+          const force = (300 - mouseDistance) / 300;
           const angle = Math.atan2(mdy, mdx);
-          p.vx += Math.cos(angle) * force * 0.5;
-          p.vy += Math.sin(angle) * force * 0.5;
+          p.x += Math.cos(angle) * force * 1.5;
+          p.y += Math.sin(angle) * force * 1.5;
+          p.vx += (Math.random() - 0.5) * 0.2;
+          p.vy += (Math.random() - 0.5) * 0.2;
         }
 
-        p.y += Math.sin(time * 2 + i * 0.15) * 0.8;
-        p.x += Math.cos(time * 2 + i * 0.15) * 0.6;
+        // Gentle velocity dampening
+        p.vx *= 0.98;
+        p.vy *= 0.98;
+        p.vz *= 0.98;
 
-        p.x += p.vx;
-        p.y += p.vy;
-        p.z += p.vz;
+        // Wrap around screen
+        if (p.x < -100) p.x = canvas.width + 100;
+        if (p.x > canvas.width + 100) p.x = -100;
+        if (p.y < -100) p.y = canvas.height + 100;
+        if (p.y > canvas.height + 100) p.y = -100;
+        if (p.z < 0) p.z = 2000;
+        if (p.z > 2000) p.z = 0;
 
-        p.vx *= 0.96;
-        p.vy *= 0.96;
-        p.vz *= 0.96;
+        p.pulse += p.pulseSpeed;
 
-        if (p.x < -50) p.x = canvas.width + 50;
-        if (p.x > canvas.width + 50) p.x = -50;
-        if (p.y < -50) p.y = canvas.height + 50;
-        if (p.y > canvas.height + 50) p.y = -50;
-        if (p.z < 0) p.z = 1500;
-        if (p.z > 1500) p.z = 0;
+        // Find closest connections
+        p.connections = [];
+        const distances = particles
+          .map((p2, j) => {
+            if (i === j) return { index: j, dist: Infinity };
+            const dx = p.x - p2.x;
+            const dy = p.y - p2.y;
+            const dz = p.z - p2.z;
+            return { index: j, dist: Math.sqrt(dx * dx + dy * dy + dz * dz) };
+          })
+          .sort((a, b) => a.dist - b.dist)
+          .slice(0, maxConnections);
 
-        p.rotation += p.rotationSpeed;
-
-        const perspective = 1200 / (1200 + p.z);
-        const x3d = (p.x - canvas.width / 2) * perspective + canvas.width / 2;
-        const y3d = (p.y - canvas.height / 2) * perspective + canvas.height / 2;
-        const size3d = p.size * perspective;
-
-        p.trail.push({ x: x3d, y: y3d, opacity: 1 });
-        if (p.trail.length > 8) p.trail.shift();
-
-        p.trail.forEach((t, idx) => {
-          t.opacity *= 0.85;
-          const trailSize = size3d * (idx / p.trail.length);
-          ctx.beginPath();
-          ctx.arc(t.x, t.y, trailSize, 0, Math.PI * 2);
-          ctx.fillStyle = p.color + Math.floor(t.opacity * 100).toString(16).padStart(2, '0');
-          ctx.fill();
+        distances.forEach(({ index, dist }) => {
+          if (dist < connectionDistance) {
+            p.connections.push(index);
+          }
         });
+      });
 
-        particles.forEach((p2, j) => {
-          if (i === j) return;
+      // Draw connections first (behind particles)
+      particles.forEach((p, i) => {
+        const perspective = 1500 / (1500 + p.z);
+        const x = (p.x - canvas.width / 2) * perspective + canvas.width / 2;
+        const y = (p.y - canvas.height / 2) * perspective + canvas.height / 2;
+
+        p.connections.forEach((j) => {
+          const p2 = particles[j];
+          const perspective2 = 1500 / (1500 + p2.z);
+          const x2 = (p2.x - canvas.width / 2) * perspective2 + canvas.width / 2;
+          const y2 = (p2.y - canvas.height / 2) * perspective2 + canvas.height / 2;
+
           const dx = p.x - p2.x;
           const dy = p.y - p2.y;
           const dz = p.z - p2.z;
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+          const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-          if (dist < 120) {
-            const opacity = (1 - dist / 120) * 0.4;
-            const perspective2 = 1200 / (1200 + p2.z);
-            const x3d2 = (p2.x - canvas.width / 2) * perspective2 + canvas.width / 2;
-            const y3d2 = (p2.y - canvas.height / 2) * perspective2 + canvas.height / 2;
-            
-            const gradient = ctx.createLinearGradient(x3d, y3d, x3d2, y3d2);
+          if (distance < connectionDistance) {
+            const opacity = (1 - distance / connectionDistance) * 0.6;
+            const avgPerspective = (perspective + perspective2) / 2;
+
+            // Create gradient line
+            const gradient = ctx.createLinearGradient(x, y, x2, y2);
             gradient.addColorStop(0, p.color + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
+            gradient.addColorStop(0.5, '#FFFFFF' + Math.floor(opacity * 0.8 * 255).toString(16).padStart(2, '0'));
             gradient.addColorStop(1, p2.color + Math.floor(opacity * 255).toString(16).padStart(2, '0'));
-            
+
             ctx.beginPath();
-            ctx.moveTo(x3d, y3d);
-            ctx.lineTo(x3d2, y3d2);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x2, y2);
             ctx.strokeStyle = gradient;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = avgPerspective * 2.5;
             ctx.stroke();
+
+            // Add glow to connections
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = avgPerspective * 1.2;
+            ctx.globalAlpha = opacity * 0.3;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
           }
         });
+      });
 
-        const glowGradient = ctx.createRadialGradient(x3d, y3d, 0, x3d, y3d, size3d * 6);
-        glowGradient.addColorStop(0, p.color + "FF");
-        glowGradient.addColorStop(0.3, p.color + "AA");
-        glowGradient.addColorStop(0.6, p.color + "44");
+      // Draw particles
+      particles.forEach((p) => {
+        const perspective = 1500 / (1500 + p.z);
+        const x = (p.x - canvas.width / 2) * perspective + canvas.width / 2;
+        const y = (p.y - canvas.height / 2) * perspective + canvas.height / 2;
+        const pulseScale = 1 + Math.sin(p.pulse) * 0.4;
+        const size = p.size * perspective * pulseScale;
+
+        // Outer glow
+        const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 8);
+        glowGradient.addColorStop(0, p.color + "CC");
+        glowGradient.addColorStop(0.4, p.color + "66");
         glowGradient.addColorStop(1, p.color + "00");
 
         ctx.beginPath();
-        ctx.arc(x3d, y3d, size3d * 6, 0, Math.PI * 2);
+        ctx.arc(x, y, size * 8, 0, Math.PI * 2);
         ctx.fillStyle = glowGradient;
         ctx.fill();
 
-        ctx.save();
-        ctx.translate(x3d, y3d);
-        ctx.rotate(p.rotation);
-
-        const coreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size3d * 2);
-        coreGradient.addColorStop(0, "#FFFFFF");
-        coreGradient.addColorStop(0.3, p.color);
-        coreGradient.addColorStop(1, p.color + "00");
+        // Middle glow
+        const midGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+        midGradient.addColorStop(0, "#FFFFFF");
+        midGradient.addColorStop(0.5, p.color);
+        midGradient.addColorStop(1, p.color + "00");
 
         ctx.beginPath();
-        ctx.arc(0, 0, size3d * 2, 0, Math.PI * 2);
-        ctx.fillStyle = coreGradient;
+        ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+        ctx.fillStyle = midGradient;
         ctx.fill();
 
-        ctx.beginPath();
-        ctx.arc(0, 0, size3d, 0, Math.PI * 2);
-        ctx.fillStyle = "#FFFFFF";
-        ctx.shadowBlur = 20;
+        // Core particle
+        ctx.shadowBlur = 25;
         ctx.shadowColor = p.color;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = "#FFFFFF";
         ctx.fill();
         ctx.shadowBlur = 0;
-
-        ctx.restore();
       });
 
       requestAnimationFrame(animate);
@@ -229,7 +257,7 @@ export default function LandingPage() {
 
   return (
     <div className="relative w-full overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
-      <canvas ref={canvasRef} className="fixed inset-0 opacity-70 pointer-events-none z-0" />
+      <canvas ref={canvasRef} className="fixed inset-0 opacity-80 pointer-events-none z-0" />
 
       {/* Quick Navigation */}
       <motion.nav 
