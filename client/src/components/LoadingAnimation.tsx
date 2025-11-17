@@ -16,31 +16,57 @@ export function LoadingAnimation() {
     canvas.height = 400;
 
     let rotation = 0;
+    let time = 0;
 
     const animate = () => {
+      time += 0.05;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.save();
       ctx.translate(200, 200);
       ctx.rotate(rotation);
 
-      // Draw multiple rotating circles
-      for (let i = 0; i < 8; i++) {
-        const angle = (Math.PI * 2 * i) / 8;
-        const x = Math.cos(angle) * 60;
-        const y = Math.sin(angle) * 60;
+      // Outer rotating ring
+      for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 * i) / 12;
+        const radius = 80 + Math.sin(time + i) * 10;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        const size = 15 + Math.sin(time + i * 0.5) * 5;
 
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, 20);
-        gradient.addColorStop(0, `hsla(${180 + i * 30}, 100%, 60%, 1)`);
-        gradient.addColorStop(1, `hsla(${180 + i * 30}, 100%, 60%, 0)`);
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+        gradient.addColorStop(0, `hsla(${180 + i * 30}, 100%, 70%, 1)`);
+        gradient.addColorStop(0.5, `hsla(${180 + i * 30}, 100%, 60%, 0.8)`);
+        gradient.addColorStop(1, `hsla(${180 + i * 30}, 100%, 50%, 0)`);
 
         ctx.beginPath();
-        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.arc(x, y, size, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
+
+        // Glow effect
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = `hsla(${180 + i * 30}, 100%, 60%, 0.5)`;
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${180 + i * 30}, 100%, 80%, 1)`;
+        ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
+      // Inner pulsing core
+      const coreSize = 30 + Math.sin(time * 2) * 10;
+      const coreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, coreSize);
+      coreGradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+      coreGradient.addColorStop(0.5, "rgba(0, 255, 255, 0.8)");
+      coreGradient.addColorStop(1, "rgba(0, 255, 255, 0)");
+
+      ctx.beginPath();
+      ctx.arc(0, 0, coreSize, 0, Math.PI * 2);
+      ctx.fillStyle = coreGradient;
+      ctx.fill();
+
       ctx.restore();
-      rotation += 0.02;
+      rotation += 0.03;
       requestAnimationFrame(animate);
     };
 
@@ -48,18 +74,60 @@ export function LoadingAnimation() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900">
-      <div className="text-center">
-        <canvas ref={canvasRef} className="mx-auto mb-8" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 relative overflow-hidden">
+      {/* Animated background particles */}
+      <div className="absolute inset-0">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-primary/30 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center relative z-10">
+        <canvas ref={canvasRef} className="mx-auto mb-8 drop-shadow-2xl" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+          <motion.h1 
+            className="text-7xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent"
+            animate={{
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            style={{
+              backgroundSize: "200% 200%",
+            }}
+          >
             EDITH
-          </h1>
-          <p className="text-gray-400 text-lg">Even Dead I Am The Hero</p>
+          </motion.h1>
+          <motion.p 
+            className="text-gray-400 text-xl mb-2"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            Even Dead I Am The Hero
+          </motion.p>
           <motion.div
             className="mt-8 flex justify-center gap-2"
             initial={{ opacity: 0 }}
@@ -69,7 +137,7 @@ export function LoadingAnimation() {
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-3 h-3 bg-cyan-500 rounded-full"
+                className="w-4 h-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-lg shadow-cyan-500/50"
                 animate={{
                   scale: [1, 1.5, 1],
                   opacity: [0.5, 1, 0.5],
