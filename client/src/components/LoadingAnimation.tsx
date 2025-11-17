@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
@@ -53,20 +52,40 @@ export function LoadingAnimation() {
         ctx.shadowBlur = 0;
       }
 
-      // Inner pulsing core
-      const coreSize = 30 + Math.sin(time * 2) * 10;
-      const coreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, coreSize);
-      coreGradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-      coreGradient.addColorStop(0.5, "rgba(0, 255, 255, 0.8)");
-      coreGradient.addColorStop(1, "rgba(0, 255, 255, 0)");
+      // Connecting lines between layers
+      ctx.strokeStyle = "rgba(139, 92, 246, 0.15)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 * i) / 6 + rotation;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * 140, Math.sin(angle) * 140);
+        ctx.stroke();
+      }
 
-      ctx.beginPath();
-      ctx.arc(0, 0, coreSize, 0, Math.PI * 2);
-      ctx.fillStyle = coreGradient;
-      ctx.fill();
+      // Center pulsing core with multiple layers
+      for (let i = 0; i < 3; i++) {
+        const pulse = Math.sin(time * 4 - i * 0.5) * 0.3 + 0.7;
+        const centerSize = (30 - i * 8) * pulse;
+        const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, centerSize);
+
+        const alpha = 1 - i * 0.3;
+        centerGradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+        centerGradient.addColorStop(0.3, `rgba(139, 92, 246, ${alpha * 0.9})`);
+        centerGradient.addColorStop(0.7, `rgba(59, 130, 246, ${alpha * 0.6})`);
+        centerGradient.addColorStop(1, "rgba(59, 130, 246, 0)");
+
+        ctx.beginPath();
+        ctx.arc(0, 0, centerSize, 0, Math.PI * 2);
+        ctx.fillStyle = centerGradient;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = "rgba(139, 92, 246, 0.5)";
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
 
       ctx.restore();
-      rotation += 0.03;
+      rotation += 0.02;
       requestAnimationFrame(animate);
     };
 
