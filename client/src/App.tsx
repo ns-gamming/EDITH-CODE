@@ -19,18 +19,14 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!user) {
       setLocation("/auth");
     }
-  }, [loading, user, setLocation]);
-
-  if (loading) {
-    return <LoadingAnimation />;
-  }
+  }, [user, setLocation]);
 
   if (!user) {
     return null;
@@ -40,18 +36,14 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
 }
 
 function PublicRoute({ component: Component }: { component: () => JSX.Element }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (user) {
       setLocation("/dashboard");
     }
-  }, [loading, user, setLocation]);
-
-  if (loading) {
-    return <LoadingAnimation />;
-  }
+  }, [user, setLocation]);
 
   if (user) {
     return null;
@@ -61,6 +53,12 @@ function PublicRoute({ component: Component }: { component: () => JSX.Element })
 }
 
 function Router() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return <LoadingAnimation />;
+  }
+
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
@@ -80,12 +78,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TooltipProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <TooltipProvider>
             <Router />
             <Toaster />
-          </AuthProvider>
-        </TooltipProvider>
+          </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

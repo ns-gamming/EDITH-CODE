@@ -2,6 +2,25 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase, isSupabaseConfigured, getSupabaseConfigError } from "@/lib/supabase";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { User } from "@shared/schema";
+import { useLocation } from "react-router-dom"; // Assuming useLocation is from react-router-dom
+
+// Placeholder for LoadingAnimation and other components/hooks that might be used
+// In a real scenario, these would be imported from their respective files.
+const LoadingAnimation = () => <div>Loading...</div>;
+const useAuth = () => {
+  // Mock implementation for demonstration
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    // Simulate authentication check
+    setTimeout(() => {
+      setUser({} as SupabaseUser); // Mock user
+      setLoading(false);
+    }, 1000);
+  }, []);
+  return { user, loading, signIn: async () => {}, signUp: async () => {}, signOut: async () => {}, updateProfile: async () => {} };
+};
+// End of mock implementations
 
 interface AuthContextType {
   user: SupabaseUser | null;
@@ -86,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error fetching profile:", error);
         return;
       }
-      
+
       if (data) {
         setProfile(data as User);
       }

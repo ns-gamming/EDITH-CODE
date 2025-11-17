@@ -6,6 +6,7 @@ import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,31 +31,87 @@ export default function DashboardPage() {
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
+
+    loadProjects();
   }, []);
+
+  const loadProjects = async () => {
+    if (!user || !supabase) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      if (data) {
+        setProjects(data as any);
+      }
+    } catch (error: any) {
+      console.error("Error loading projects:", error);
+    }
+  };
 
   const handleProjectOpen = (projectId: string) => {
     setLocation(`/ide/${projectId}`);
   };
 
-  const handleProjectCreate = () => {
-    const newProject: Project = {
-      id: Math.random().toString(36),
-      userId: user?.id || "",
-      name: "New Project",
-      description: "A new AI-powered project",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setProjects((prev) => [...prev, newProject]);
-    setLocation(`/ide/${newProject.id}`);
+  const handleProjectCreate = async () => {
+    if (!user || !supabase) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .insert({
+          user_id: user.id,
+          name: "New Project",
+          description: "A new AI-powered project",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Project Created",
+        description: "Your project has been saved to Supabase",
+      });
+
+      setLocation(`/ide/${data.id}`);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleProjectDelete = (projectId: string) => {
-    setProjects((prev) => prev.filter((p) => p.id !== projectId));
-    toast({
-      title: "Project Deleted",
-      description: "The project has been deleted successfully.",
-    });
+  const handleProjectDelete = async (projectId: string) => {
+    if (!supabase) return;
+
+    try {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectId);
+
+      if (error) throw error;
+
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      toast({
+        title: "Project Deleted",
+        description: "The project has been deleted successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSignOut = async () => {
