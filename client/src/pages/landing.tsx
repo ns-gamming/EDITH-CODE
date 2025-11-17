@@ -2,19 +2,23 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Code2, Sparkles, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowRight, Code2, Sparkles, Zap, Rocket, Users, Shield, Terminal, Layers, GitBranch } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 export default function LandingPage() {
   const [, setLocation] = useLocation();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeSection, setActiveSection] = useState("hero");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
   useEffect(() => {
     setTimeout(() => setIsLoaded(true), 100);
   }, []);
 
-  // Advanced 3D Particle System
+  // Enhanced 3D Particle System
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -76,9 +80,7 @@ export default function LandingPage() {
       ctx.fillStyle = "rgba(15, 23, 42, 0.15)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
       particles.forEach((p, i) => {
-        // 3D rotation effect
         const rotationSpeed = 0.001;
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
@@ -91,7 +93,6 @@ export default function LandingPage() {
         p.x = centerX + Math.cos(angle) * distance;
         p.y = centerY + Math.sin(angle) * distance;
 
-        // Mouse interaction with fluid physics
         const mdx = mouseX - p.x;
         const mdy = mouseY - p.y;
         const mouseDistance = Math.sqrt(mdx * mdx + mdy * mdy);
@@ -103,21 +104,17 @@ export default function LandingPage() {
           p.vy += Math.sin(angle) * force * 0.3;
         }
 
-        // Wave motion
         p.y += Math.sin(time + i * 0.1) * 0.5;
         p.x += Math.cos(time + i * 0.1) * 0.3;
 
-        // Update position with velocity
         p.x += p.vx;
         p.y += p.vy;
         p.z += p.vz;
 
-        // Apply friction
         p.vx *= 0.98;
         p.vy *= 0.98;
         p.vz *= 0.98;
 
-        // Boundary wrapping with depth
         if (p.x < 0) p.x = canvas.width;
         if (p.x > canvas.width) p.x = 0;
         if (p.y < 0) p.y = canvas.height;
@@ -125,13 +122,11 @@ export default function LandingPage() {
         if (p.z < 0) p.z = 1000;
         if (p.z > 1000) p.z = 0;
 
-        // Calculate 3D perspective
         const perspective = 1000 / (1000 + p.z);
         const x3d = (p.x - canvas.width / 2) * perspective + canvas.width / 2;
         const y3d = (p.y - canvas.height / 2) * perspective + canvas.height / 2;
         const size3d = p.size * perspective;
 
-        // Draw connections
         particles.forEach((p2, j) => {
           if (i === j) return;
           const dx = p.x - p2.x;
@@ -152,7 +147,6 @@ export default function LandingPage() {
           }
         });
 
-        // Draw particle with glow
         const gradient = ctx.createRadialGradient(x3d, y3d, 0, x3d, y3d, size3d * 3);
         gradient.addColorStop(0, p.color);
         gradient.addColorStop(0.5, p.color + "80");
@@ -180,163 +174,380 @@ export default function LandingPage() {
     };
   }, []);
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: "smooth" });
+    setActiveSection(id);
+  };
+
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
-      <canvas ref={canvasRef} className="absolute inset-0 opacity-60" />
+    <div className="relative w-full overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
+      <canvas ref={canvasRef} className="fixed inset-0 opacity-60 pointer-events-none" />
       
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div 
-          className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div 
-          className="absolute top-1/2 -left-40 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-pink-500/20 blur-3xl"
-          animate={{
-            scale: [1, 1.4, 1],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-      </div>
-
-      <div
-        className={`relative z-10 flex h-full flex-col items-center justify-center px-4 text-center transition-all duration-1000 ${
-          isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-        }`}
+      {/* Quick Navigation */}
+      <motion.nav 
+        className="fixed top-8 left-1/2 -translate-x-1/2 z-50 backdrop-blur-md bg-card/40 border border-primary/20 rounded-full px-6 py-3 shadow-2xl shadow-primary/20"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
       >
-        <motion.div 
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card/80 backdrop-blur-sm px-4 py-2 text-sm shadow-lg shadow-primary/20"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          whileHover={{ scale: 1.05 }}
-        >
-          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-          <span className="font-medium">AI-Powered Development Platform</span>
-        </motion.div>
-
-        <motion.h1 
-          className="mb-6 text-7xl md:text-9xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient filter drop-shadow-2xl"
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, type: "spring", stiffness: 150 }}
-          style={{
-            backgroundSize: "200% 200%",
-          }}
-        >
-          EDITH
-        </motion.h1>
-
-        <motion.p 
-          className="mb-4 text-2xl md:text-4xl font-semibold text-foreground max-w-4xl"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          Enhanced Development Interface for
-          <br />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
-            Technology and Hacking
-          </span>
-        </motion.p>
-
-        <motion.p 
-          className="mb-12 text-lg md:text-xl text-muted-foreground max-w-2xl"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          Build, deploy, and collaborate on projects with the power of AI.
-          Experience intelligent code generation, real-time collaboration, and
-          seamless deployment.
-        </motion.p>
-
-        <motion.div 
-          className="flex flex-col sm:flex-row gap-4"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.9 }}
-        >
-          <Button
-            size="lg"
-            onClick={() => setLocation("/auth")}
-            className="group relative overflow-hidden bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all duration-300"
-          >
-            <span className="relative z-10 flex items-center gap-2">
-              Get Started
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </span>
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "100%" }}
-              transition={{ duration: 0.5 }}
-            />
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => setLocation("/dashboard")}
-            className="px-8 py-6 text-lg font-semibold border-2 border-primary/50 hover:border-primary hover:bg-primary/10 backdrop-blur-sm transition-all duration-300"
-          >
-            <Code2 className="w-5 h-5 mr-2" />
-            View Demo
-          </Button>
-        </motion.div>
-
-        <motion.div 
-          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl"
-          initial={{ y: 40, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.1 }}
-        >
+        <div className="flex items-center gap-6">
           {[
-            { icon: Code2, title: "Smart Coding", desc: "AI-powered code completion" },
-            { icon: Zap, title: "Real-time Collab", desc: "Work together seamlessly" },
-            { icon: Sparkles, title: "Auto Deploy", desc: "One-click deployment" },
-          ].map((feature, i) => (
-            <motion.div
-              key={i}
-              className="p-6 rounded-xl bg-card/40 backdrop-blur-md border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/20"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2 + i * 0.1 }}
+            { id: "hero", label: "Home" },
+            { id: "features", label: "Features" },
+            { id: "capabilities", label: "Capabilities" },
+            { id: "cta", label: "Get Started" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => scrollToSection(item.id)}
+              className={`text-sm font-medium transition-all duration-300 hover:text-primary ${
+                activeSection === item.id ? "text-primary scale-110" : "text-muted-foreground"
+              }`}
             >
-              <feature.icon className="w-10 h-10 text-primary mb-3 mx-auto" />
-              <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">{feature.desc}</p>
-            </motion.div>
+              {item.label}
+            </button>
           ))}
+        </div>
+      </motion.nav>
+
+      {/* Hero Section */}
+      <section id="hero" className="relative min-h-screen flex items-center justify-center px-4">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div 
+            className="absolute top-1/2 -left-40 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl"
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.2, 0.4, 0.2],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+          />
+        </div>
+
+        <motion.div
+          className="relative z-10 text-center"
+          style={{ opacity, scale }}
+        >
+          <motion.div 
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-card/80 backdrop-blur-sm px-4 py-2 text-sm shadow-lg shadow-primary/20"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            whileHover={{ scale: 1.05 }}
+          >
+            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+            <span className="font-medium">AI-Powered Development Platform</span>
+          </motion.div>
+
+          <motion.h1 
+            className="mb-6 text-7xl md:text-9xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 animate-gradient filter drop-shadow-2xl"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, type: "spring", stiffness: 150 }}
+            style={{
+              backgroundSize: "200% 200%",
+              transform: "translateZ(50px)",
+              transformStyle: "preserve-3d",
+            }}
+          >
+            EDITH
+          </motion.h1>
+
+          <motion.p 
+            className="mb-4 text-2xl md:text-4xl font-semibold text-foreground max-w-4xl mx-auto"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            style={{ transform: "translateZ(30px)" }}
+          >
+            Enhanced Development Interface for
+            <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+              Technology and Hacking
+            </span>
+          </motion.p>
+
+          <motion.p 
+            className="mb-12 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            Build, deploy, and collaborate on projects with the power of AI.
+            Experience intelligent code generation, real-time collaboration, and
+            seamless deployment.
+          </motion.p>
+
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
+            <Button
+              size="lg"
+              onClick={() => setLocation("/auth")}
+              className="group relative overflow-hidden bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white px-8 py-6 text-lg font-semibold shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all duration-300 transform hover:scale-105"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                Get Started
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
+                initial={{ x: "-100%" }}
+                whileHover={{ x: "100%" }}
+                transition={{ duration: 0.5 }}
+              />
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setLocation("/dashboard")}
+              className="px-8 py-6 text-lg font-semibold border-2 border-primary/50 hover:border-primary hover:bg-primary/10 backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
+            >
+              <Code2 className="w-5 h-5 mr-2" />
+              View Demo
+            </Button>
+          </motion.div>
         </motion.div>
-      </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="relative min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="max-w-7xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600">
+              Powerful Features
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Everything you need to build amazing projects with AI assistance
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { 
+                icon: Code2, 
+                title: "Smart Coding", 
+                desc: "AI-powered code completion and intelligent suggestions",
+                color: "from-cyan-500 to-blue-500"
+              },
+              { 
+                icon: Zap, 
+                title: "Real-time Collaboration", 
+                desc: "Work together seamlessly with your team in real-time",
+                color: "from-purple-500 to-pink-500"
+              },
+              { 
+                icon: Sparkles, 
+                title: "Auto Deploy", 
+                desc: "One-click deployment to production environments",
+                color: "from-green-500 to-emerald-500"
+              },
+              { 
+                icon: Terminal, 
+                title: "Integrated Terminal", 
+                desc: "Built-in terminal with full command-line access",
+                color: "from-orange-500 to-red-500"
+              },
+              { 
+                icon: Layers, 
+                title: "Project Templates", 
+                desc: "Kickstart your projects with pre-built templates",
+                color: "from-violet-500 to-purple-500"
+              },
+              { 
+                icon: GitBranch, 
+                title: "Version Control", 
+                desc: "Git integration for seamless version management",
+                color: "from-blue-500 to-indigo-500"
+              },
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                className="p-8 rounded-2xl bg-card/40 backdrop-blur-md border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/30 group"
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                viewport={{ once: true }}
+                whileHover={{ 
+                  y: -10, 
+                  scale: 1.05,
+                  rotateX: 5,
+                  rotateY: 5,
+                }}
+                style={{
+                  transformStyle: "preserve-3d",
+                  perspective: "1000px",
+                }}
+              >
+                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <feature.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-2xl mb-3 text-foreground">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Capabilities Section */}
+      <section id="capabilities" className="relative min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="max-w-7xl mx-auto w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+              Built for Developers
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              A complete development environment designed for modern workflows
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {[
+              {
+                icon: Rocket,
+                title: "Lightning Fast Performance",
+                description: "Optimized for speed with instant hot-reload and minimal latency",
+                features: ["Sub-second builds", "Real-time preview", "Edge deployment"]
+              },
+              {
+                icon: Users,
+                title: "Team Collaboration",
+                description: "Work together with advanced collaboration features",
+                features: ["Live cursors", "Shared projects", "Comment threads"]
+              },
+              {
+                icon: Shield,
+                title: "Enterprise Security",
+                description: "Bank-grade security for your code and projects",
+                features: ["End-to-end encryption", "2FA support", "SOC 2 compliant"]
+              },
+              {
+                icon: Sparkles,
+                title: "AI Assistant - EDITH",
+                description: "Your intelligent coding companion powered by advanced AI",
+                features: ["Code generation", "Bug detection", "Optimization tips"]
+              },
+            ].map((capability, i) => (
+              <motion.div
+                key={i}
+                className="p-8 rounded-2xl bg-gradient-to-br from-card/60 to-card/40 backdrop-blur-xl border border-primary/30 hover:border-primary/60 transition-all duration-500 group"
+                initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.2, duration: 0.6 }}
+                viewport={{ once: true }}
+                whileHover={{
+                  scale: 1.05,
+                  rotateY: 5,
+                  rotateX: 5,
+                }}
+                style={{
+                  transformStyle: "preserve-3d",
+                  perspective: "1000px",
+                }}
+              >
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-xl shadow-primary/50">
+                    <capability.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold mb-3">{capability.title}</h3>
+                    <p className="text-muted-foreground mb-4">{capability.description}</p>
+                    <ul className="space-y-2">
+                      {capability.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section id="cta" className="relative min-h-screen flex items-center justify-center px-4 py-20">
+        <motion.div
+          className="max-w-4xl mx-auto text-center"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <div className="p-12 rounded-3xl bg-gradient-to-br from-primary/20 to-purple-600/20 backdrop-blur-xl border border-primary/30 shadow-2xl shadow-primary/20">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
+              Ready to Build the Future?
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join thousands of developers already using EDITH to build amazing projects
+            </p>
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Button
+                size="lg"
+                onClick={() => setLocation("/auth")}
+                className="group relative overflow-hidden bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white px-10 py-7 text-xl font-semibold shadow-xl shadow-primary/50 hover:shadow-2xl hover:shadow-primary/60 transition-all duration-300"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Start Building Now
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </Button>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative py-12 border-t border-primary/20 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-muted-foreground mb-2">
+            Created by <span className="font-bold text-primary">NISHANT SARKAR</span>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            © 2024 VibeCoder / NS GAMMING. All rights reserved.
+          </p>
+        </div>
+      </footer>
 
       <style>{`
         @keyframes gradient {
